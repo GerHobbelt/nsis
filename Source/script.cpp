@@ -5342,8 +5342,55 @@ int CEXEBuild::do_add_file(const TCHAR *lgss, int attrib, int recurse, int *tota
   return PS_OK;
 }
 
+#include <locale>
+#if defined(_WIN32) && defined(_UNICODE)
+static tstring make_acceptable_path_from_dir(const tstring& p)
+{
+	//see http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx 
+	if (p.length() <= 2)
+		return p; //it is unlikely the path will be more than MAXPATH characters sice the filename itself cannot be longer than 255 characters
+	std::locale loc("C");
+	tstring ret;
+	if (std::isalpha(p[0], loc) && p[1] == _T(':') && p[2] == _T('\\')) //drive 
+		ret=p; 
+	else if (p[0] == _T('\\') && p[1] == _T('\\')) //UNC path
+	{
+		ret = _T("UNC") + p.substr(1, tstring::npos);  //name will have the form \\?\UNC\server\share\rest
+	}
+	else
+	{
+		int cwdlen = GetCurrentDirectory(0, NULL);
+		TCHAR *buffer = new TCHAR[cwdlen];
+		GetCurrentDirectory(cwdlen, buffer);
+		ret = buffer;
+		ret += _T("\\") + p;
+		delete[] buffer;
+	}
+	tstring::size_type pos = ret.find(_T("..\\"), 0);
+	while (pos != tstring::npos)
+	{
+		tstring::size_type pos2 = ret.rfind(_T("\\"), pos - 2);
+		if (pos2 == tstring::npos)
+			return p; //The directory '..' is refering to cannot be found. return the original name and hope for the best
+		ret.erase(pos2 + 1, pos - pos2 + 2);
+		pos = ret.find(_T("..\\"), pos2);
+	}
+	pos = pos = ret.find(_T(".\\"), 0);
+	while (pos != tstring::npos)
+	{
+		ret.erase(pos, 2);
+		pos = ret.find(_T(".\\"), pos);
+	}
+	return L"\\\\?\\" + ret;
+}
+#endif
+
 int CEXEBuild::add_file(const tstring& dir, const tstring& file, int attrib, const TCHAR *name_override, int generatecode, int *data_handle) {
-  tstring newfn_s = dir + PLATFORM_PATH_SEPARATOR_C + file;
+#if defined(_WIN32) && defined(_UNICODE)
+	tstring newfn_s = make_acceptable_path_from_dir(dir) + PLATFORM_PATH_SEPARATOR_C + file;
+#else
+	tstring newfn_s = dir + PLATFORM_PATH_SEPARATOR_C + file;
+#endif
   const TCHAR *newfn = newfn_s.c_str();
   const TCHAR *filename = file.c_str();
   MMapFile mmap;
