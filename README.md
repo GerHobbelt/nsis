@@ -1,3 +1,7 @@
+# This Fork
+
+Simple Fork that supports long path on windows (also default with NSIS_MAX_STRLEN=4096)
+
 # NSIS
 
 [![CI](https://github.com/kichik/nsis/workflows/CI/badge.svg)](https://github.com/kichik/nsis/actions)
