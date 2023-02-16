@@ -76,7 +76,7 @@ jobs:
         with:
           name: build.zip
           path: nsis-*.zip
-        if: matrix.nightly == 'nightly' && github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/master'
 
   nightly:
     if: github.ref == 'refs/heads/master'

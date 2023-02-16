@@ -6,6 +6,7 @@
 #define IDC_LANGUAGE                    1002
 #define IDC_TEXT                        1007
 #define IDC_APPICON                     1008
+#define IDC_LANG                        1009
 
 // Next default values for new objects
 // 

@@ -93,6 +93,25 @@ INT_PTR CALLBACK DialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPara
   switch (uMsg)
   {
     // handle notifications
+    case WM_KEYDOWN:
+    {
+      HWND hwCtl = GetDlgItem(hwndDlg, LOWORD(wParam));
+      struct nsControl* ctl = GetControl(hwCtl);
+
+      if (ctl == NULL)
+        break;
+      if (LOWORD(wParam) == VK_RETURN && (ctl->type == NSCTL_LINK))
+      {
+        if (ctl->callbacks.onClick)
+        {
+          pushintptr((INT_PTR) hwCtl);
+          g_pluginParms->ExecuteCodeSegment(ctl->callbacks.onClick - 1, 0);
+        }
+      }
+
+      break;
+    }
+    
     case WM_COMMAND:
     {
       HWND hwCtl = GetDlgItem(hwndDlg, LOWORD(wParam));
