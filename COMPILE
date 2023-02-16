@@ -1,0 +1,83 @@
+
+Building NSIS with MSYS2/MINGW
+
+Things that you'll need:
+git, MSYS2 + mingw, Python + SCons, HTML Help Workshop, zlib, and patience...
+
+
+*********************************
+** GIT
+*********************************
+Install "Git for Windows"
+Default settings are OK
+Download:
+	https://gitforwindows.org/
+	https://tortoisegit.org/ (optional)
+
+*********************************
+** mingw
+*********************************
+We'll use the msys2 distro
+Install to C:\msys2
+
+Download:
+	http://repo.msys2.org/distrib/x86_64/
+
+	Guides:
+	http://www.msys2.org/
+	https://github.com/msys2/msys2/wiki/MSYS2-installation
+	https://stackoverflow.com/questions/30069830/how-to-install-mingw-w64-and-msys2#30071634
+
+	Pacman summary:
+	Update:		pacman -Syu (run multiple times!)
+	Installed:	pacman -Q | grep PKNAME
+	Search:		pacman -Ss PKNAME
+	Remove:		pacman -Rdd PKNAME
+
+Install mingw (both x86 and amd64):
+	pacman -S mingw-w64-x86_64-toolchain
+	pacman -S mingw-w64-i686-toolchain
+
+*********************************
+** Python + SCons
+*********************************
+Python 3.7 and 3.8 (x64) are known to work well
+
+Download:
+	https://www.python.org/downloads/release
+	https://scons.org/ (No need to download it. We'll install it with pip)
+
+Install/Update Python modules:
+	py.exe -3 -m pip install --upgrade pip
+	py.exe -3 -m pip install --upgrade scons
+
+*********************************
+** HTML Help Workshop
+*********************************
+Required for building NSIS help file (.chm)
+Default settings are OK
+Download:
+	http://www.microsoft.com/en-us/download/details.aspx?id=21138
+
+*********************************
+** Source Code
+*********************************
+
+>	clone this repository locally
+>	initialize and update its submodules
+
+
+*********************************
+** Build
+*********************************
+Run:
+	_build_ALL.bat
+	Remain calm. It takes a few minutes to build...
+
+*********************************
+** Credits
+*********************************
+Marius Negruțiu (marius.negrutiu@protonmail.com)
+All the guys and girls who burned calories for all these tools & libs
+All NSIS community
+Enjoy!
