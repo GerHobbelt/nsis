@@ -1,3 +1,5 @@
+### Preprocessor Tests ###
+
 !ifndef file_is_included
 !define file_is_included
 
@@ -12,6 +14,8 @@ code inside comments should not be executed
 */
 # invalid preprocessor should be ignored
 !hello
+!error valid_preprocessor_syntax_must_be_ignored
+!define /foo /bar /baz and the same with invalid parameters
 !endif
 
 !ifdef d1
@@ -93,6 +97,49 @@ this shouldn't be compiled
  !error "!if 'test' == 'test' is true!"
 !endif
 
+
+!define ASSERT `!insertmacro ASSERT "${U+24}{__FILE__}" ${U+24}{__LINE__} `
+!macro ASSERT __file __line __xpr
+!if ${__xpr}
+!else
+!error `ASSERT: ${__xpr} (${__file}:${__line})`
+!endif
+!macroend
+
+
+; test macros
+!macro TM_0
+!macroend
+!macro TM_1
+!error "Wrong TM_1"
+!macroend
+!macro TM_2
+!error "Wrong TM_2"
+!macroend
+!macroundef TM_2 ; Undefine the last macro
+!macro TM_2
+!if 0
+!endif
+!macroend
+!ifmacrodef TM_1
+!macroundef TM_1 ; Undefine "in the middle" macro
+!endif
+!macro TM_1
+!macroend
+!insertmacro TM_1
+!insertmacro TM_2
+
+!macro TM_Recursion def
+!if '${${def}}' < 42
+  !define /redef /math ${def} '${${def}}' + 1
+  !insertmacro ${__MACRO__} ${def}
+!endif
+!macroend
+!define /redef OUT1 0
+!insertmacro TM_Recursion OUT1
+${ASSERT} '${OUT1} = 42'
+
+
 ; testing of two math functions and a macro hack :)
 !define increase "!insertmacro increase"
 !macro increase DEFINE
@@ -129,7 +176,18 @@ ${increase} number3
   !error "number5 != 1"
 !endif
 
+!define /redef /math OUT1 0xffffffff >> 31
+${ASSERT} '${OUT1} = -1'
+!define /redef /math OUT1 0xffffffff >>> 31
+${ASSERT} '${OUT1} = 1'
+!define /redef /math OUT1 1 << 31
+${ASSERT} '${OUT1} = 0x80000000'
+
+!define /redef /math OUT1 0x80000000 ^ 0x40000000
+${ASSERT} '${OUT1} = 0xC0000000'
+
 ; end math functions
+
 
 # this should just give a warning, not an error
 !include /NONFATAL file_that_doesnt_exist.nsh
@@ -137,12 +195,13 @@ ${increase} number3
 # this should include this file just one time.
 !include preprocessor.nsi
 
+
+# test scopes
+
 Section
 Return
 WriteUninstaller uninst.exe # avoid warning
 SectionEnd
-
-# test scopes
 
 !macro TEST_SCOPE scope def should_exist
 
@@ -168,6 +227,7 @@ SectionEnd
 
 !macroend
 
+!insertmacro TEST_SCOPE "macro" __MACRO__ y
 !insertmacro TEST_SCOPES "global" y n n n n
 
 Section test
@@ -216,6 +276,65 @@ PageExEnd
 
 !insertmacro TEST_SCOPES "global" y n n n n
 
+
+# test !pragma
+!pragma warning push
+  !pragma warning disable 7000
+  !include /NONFATAL doesnt_exist_nor_can_you_see_me.nsh
+!pragma warning pop
+
+!pragma warning push
+  !pragma warning disable all
+  !include /NONFATAL doesnt_exist_nor_can_you_see_me.nsh
+  !pragma warning push
+    !pragma warning error all
+  !pragma warning pop
+  !warning "You can't see me" ; "disable all" is still in effect
+!pragma warning pop
+
+
+# test !searchparse
+!searchparse "AbcDef" "Abc" OUT1
+${ASSERT} '${OUT1} S== "Def"'
+
+!define /redef OUT1 FAILED
+!searchparse /noerrors "AbcDef" "FailThis" OUT1
+${ASSERT} '${OUT1} S== "FAILED"'
+
+!searchparse /ignorecase "AbcDef" "ABC" OUT1
+${ASSERT} '${OUT1} S== "Def"'
+
+!searchparse "AbcDef" "Ab" OUT1 "D" OUT2
+${ASSERT} '"${OUT1}${OUT2}" S== "cef"'
+
+!searchparse /ignorecase /file "${__FILE__}" "### " OUT1 " Tests"
+${ASSERT} '${OUT1} == "Preprocessor"'
+
+!searchparse "AbcDef" "" OUT1 "Def" ; Empty first search string and chopping off the end without defining OUTPUTSYMBOL2
+${ASSERT} '${OUT1} S== "Abc"'
+
+
+# test !searchreplace
+!searchreplace OUT1 "FooBar" "Bar" "Baz"
+${ASSERT} '${OUT1} S== "FooBaz"'
+
+!searchreplace OUT1 "FooBarBar" "Bar" "Baz" ; "replacing all instances"
+${ASSERT} '${OUT1} S== "FooBazBaz"'
+
+!searchreplace OUT1 "FooBar" "BAR" "Baz"
+${ASSERT} '${OUT1} S== "FooBar"'
+
+!searchreplace /ignorecase OUT1 "FooBar" "BAR" "Baz"
+${ASSERT} '${OUT1} S== "FooBaz"'
+
+!searchreplace OUT1 "FooBar" "FailThis" "Baz" ; "allows you to redefine symbol_out without warning or error"
+${ASSERT} '${OUT1} S== "FooBar"'
+
+
+!verbose 4
+!echo "Completed tests"
+!verbose 2
+!pragma whip 0 # EOF
 !else
 
 # this should just give a warning, not an error

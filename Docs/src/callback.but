@@ -1,6 +1,6 @@
 \S1{callbacks} Callback Functions
 
-You can create callback functions which have special names, that will be called by the installer at certain points in the install. Below is a list of currently available callbacks:
+You can create callback functions (which have special names), that will be called by the installer at certain points in the install. Below is a list of available callbacks:
 
 \S2{instcallbacks} Install Callbacks
 
@@ -100,7 +100,7 @@ Example:
 
 Called when the selection changes on the \R{pages}{component page}. Useful for using with \R{sectionsetflags}{SectionSetFlags} and \R{sectiongetflags}{SectionGetFlags}.
 
-Selection changes include both section selection and installation type change.
+Selection changes include both section selection and installation type changes. The section id of the changed section is stored in $0. $0 is -1 if the installation type changed. You only get notifications for changes initiated by the user and only one notification per action even if the action also affected child sections and/or parent groups.
 
 \S3{onuserabort} .onUserAbort
 
@@ -116,7 +116,7 @@ Example:
 
 \S3{onverifyinstdir} .onVerifyInstDir
 
-This callback enables control over whether or not an installation path is valid for your installer. This code will be called every time the user changes the install directory, so it shouldn't do anything crazy with \R{messagebox}{MessageBox} or the likes. If this function calls \R{abort}{Abort}, the installation path in $INSTDIR is deemed invalid.
+This callback enables control over whether or not an installation path is valid for your installer. This code will be called every time the user changes the install directory, so it shouldn't do anything crazy with \R{messagebox}{MessageBox} or the like. If this function calls \R{abort}{Abort}, the installation path in $INSTDIR is deemed invalid.
 
 Example:
 
@@ -136,7 +136,7 @@ Have a look at \R{onguiinit}{.onGUIInit} for an example.
 
 \S3{unonInit} un.onInit
 
-This callback will be called when the uninstaller is nearly finished initializing. If the 'un.onInit' function calls Abort, the uninstaller will quit instantly. Note that this function can verify and/or modify $INSTDIR if necessary.
+This callback will be called when the uninstaller is nearly finished initializing. If the ' \R{unonInit}{un.onInit}' function calls \R{abort}{Abort}, the uninstaller will quit instantly. Note that this function can verify and/or modify $INSTDIR if necessary.
 
 Here are two examples of how this might be used:
 
@@ -193,11 +193,11 @@ Example:
 
 Called when the selection changes on the \R{pages}{component page}. Useful for using with \R{sectionsetflags}{SectionSetFlags} and \R{sectiongetflags}{SectionGetFlags}.
 
-Selection changes include both section selection and installation type change.
+Selection changes include both section selection and installation type changes. The section id of the changed section is stored in $0. $0 is -1 if the installation type changed. You only get notifications for changes initiated by the user and only one notification per action even if the action also affected child sections and/or parent groups.
 
 \S3{unonuserabort} un.onUserAbort
 
-This callback is called when the user hits the 'cancel' button and the uninstall hasn't already failed. If this function calls Abort, the install will not be aborted.
+This callback is called when the user hits the 'cancel' button and the uninstall hasn't already failed. If this function calls \R{abort}{Abort}, the install will not be aborted.
 
 Example:
 

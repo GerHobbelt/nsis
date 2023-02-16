@@ -3,7 +3,7 @@
  * 
  * This file is a part of NSIS.
  * 
- * Copyright (C) 2002 Amir Szekely <kichik@netvision.net.il>
+ * Copyright (C) 2002-2019 Amir Szekely <kichik@netvision.net.il> and Contributors
  * 
  * Licensed under the zlib/libpng license (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ static inline short ConvertEndianness(short s) {
 #define ALIGN(dwToAlign, dwAlignOn) dwToAlign = (dwToAlign%dwAlignOn == 0) ? dwToAlign : dwToAlign - (dwToAlign%dwAlignOn) + dwAlignOn
 
 // Reads a variant length array from seeker into readInto and advances seeker
-void ReadVarLenArr(LPBYTE &seeker, WCHAR* &readInto, unsigned int uCodePage) {
+void ReadVarLenArr(LPBYTE &seeker, WINWCHAR* &readInto, unsigned int uCodePage) {
   WORD* arr = (WORD*)seeker;
   switch (ConvertEndianness(arr[0])) {
   case 0x0000:
@@ -54,13 +54,13 @@ void ReadVarLenArr(LPBYTE &seeker, WCHAR* &readInto, unsigned int uCodePage) {
     seeker += sizeof(WORD);
     break;
   case 0xFFFF:
-    readInto = MAKEINTRESOURCEW(ConvertEndianness(arr[1]));
+    readInto = MAKEINTRESOURCEWINW(ConvertEndianness(arr[1]));
     seeker += 2*sizeof(WORD);
     break;
   default:
     {
-      readInto = winchar_strdup((WCHAR *) arr);
-      PWCHAR wseeker = PWCHAR(seeker);
+      readInto = WinWStrDupFromWinWStr((WINWCHAR*) arr);
+      WINWCHAR *wseeker = (WINWCHAR*) seeker;
       while (*wseeker++);
       seeker = LPBYTE(wseeker);
     }
@@ -74,25 +74,26 @@ void ReadVarLenArr(LPBYTE &seeker, WCHAR* &readInto, unsigned int uCodePage) {
     if (IS_INTRESOURCE(x)) { \
       *(WORD*)seeker = 0xFFFF; \
       seeker += sizeof(WORD); \
-      *(WORD*)seeker = ConvertEndianness(WORD(DWORD(x))); \
+      *(WORD*)seeker = ConvertEndianness(WORD((ULONG_PTR)(x))); \
       seeker += sizeof(WORD); \
     } \
     else { \
-      winchar_strcpy((WCHAR *) seeker, x); \
-      seeker += winchar_strlen((WCHAR *) seeker) * sizeof(WCHAR) + sizeof(WCHAR); \
+      WinWStrCpy((WINWCHAR *) seeker, x); \
+      seeker += WinWStrLen((WINWCHAR *) seeker) * sizeof(WINWCHAR) + sizeof(WINWCHAR); \
     } \
   else \
     seeker += sizeof(WORD);
 
 // A macro that adds the size of x (which can be a string a number, or nothing) to dwSize
-#define AddStringOrIdSize(x) dwSize += x ? (IS_INTRESOURCE(x) ? sizeof(DWORD) : (winchar_strlen(x) + 1) * sizeof(WCHAR)) : sizeof(WORD)
+#define AddStringOrIdSize(x) dwSize += x ? (IS_INTRESOURCE(x) ? sizeof(DWORD) : (DWORD)((WinWStrLen(x) + 1) * sizeof(WINWCHAR))) : sizeof(WORD)
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CDialogTemplate::CDialogTemplate(BYTE* pbData, unsigned int uCodePage) {
+CDialogTemplate::CDialogTemplate(BYTE* pbData, bool build_unicode, unsigned int uCodePage) {
   m_uCodePage = uCodePage;
+  m_build_unicode = build_unicode;
 
   m_dwHelpId = 0;
   m_szClass = 0;
@@ -219,23 +220,22 @@ CDialogTemplate::CDialogTemplate(BYTE* pbData, unsigned int uCodePage) {
   }
 }
 
+static void free_template_string(WINWCHAR*s)
+{
+  if (!IS_INTRESOURCE(s)) free(s);
+}
+
 CDialogTemplate::~CDialogTemplate() {
-  if (m_szMenu && !IS_INTRESOURCE(m_szMenu))
-    delete [] m_szMenu;
-  if (m_szClass && !IS_INTRESOURCE(m_szClass))
-    delete [] m_szClass;
-  if (m_szTitle)
-    delete [] m_szTitle;
-  if (m_szFont)
-    delete [] m_szFont;
+  free_template_string(m_szMenu);
+  free_template_string(m_szClass);
+  free(m_szTitle);
+  free(m_szFont);
 
   for (unsigned int i = 0; i < m_vItems.size(); i++) {
-    if (m_vItems[i]->szClass && !IS_INTRESOURCE(m_vItems[i]->szClass))
-      delete [] m_vItems[i]->szClass;
-    if (m_vItems[i]->szTitle && !IS_INTRESOURCE(m_vItems[i]->szTitle))
-      delete [] m_vItems[i]->szTitle;
-    if (m_vItems[i]->szCreationData)
-      delete [] m_vItems[i]->szCreationData;
+    free_template_string(m_vItems[i]->szClass);
+    free_template_string(m_vItems[i]->szTitle);
+    if (m_vItems[i]->szCreationData) delete [] m_vItems[i]->szCreationData;
+    delete m_vItems[i];
   }
 }
 
@@ -280,19 +280,14 @@ int CDialogTemplate::RemoveItem(WORD wId) {
 }
 
 // Sets the font of the dialog
-void CDialogTemplate::SetFont(char* szFaceName, WORD wFontSize) {
-  if (strcmp(szFaceName, "MS Shell Dlg")) {
-     // not MS Shell Dlg
-    m_dwStyle &= ~DS_SHELLFONT;
-  }
-  else {
-    // MS Shell Dlg
+void CDialogTemplate::SetFont(TCHAR* szFaceName, WORD wFontSize) {
+  m_dwStyle &= ~DS_SHELLFONT;
+  if (!_tcscmp(szFaceName, _T("MS Shell Dlg"))) // TODO: "MS Shell Dlg 2"?
     m_dwStyle |= DS_SHELLFONT;
-  }
-  m_bCharset = DEFAULT_CHARSET;
   m_dwStyle |= DS_SETFONT;
-  if (m_szFont) delete [] m_szFont;
-  m_szFont = winchar_fromansi(szFaceName, m_uCodePage);
+  m_bCharset = DEFAULT_CHARSET;
+  free(m_szFont);
+  m_szFont = WinWStrDupFromTChar(szFaceName, m_uCodePage);
   m_sFontSize = wFontSize;
 }
 
@@ -302,10 +297,10 @@ void CDialogTemplate::AddItem(DialogItemTemplate item) {
   CopyMemory(newItem, &item, sizeof(DialogItemTemplate));
 
   if (item.szClass && !IS_INTRESOURCE(item.szClass)) {
-    newItem->szClass = winchar_strdup(item.szClass);
+    newItem->szClass = WinWStrDupFromWinWStr(item.szClass);
   }
   if (item.szTitle && !IS_INTRESOURCE(item.szTitle)) {
-    newItem->szTitle = winchar_strdup(item.szTitle);
+    newItem->szTitle = WinWStrDupFromWinWStr(item.szTitle);
   }
   if (item.wCreateDataSize) {
     newItem->szCreationData = new char[item.wCreateDataSize];
@@ -334,7 +329,7 @@ HWND CDialogTemplate::CreateDummyDialog() {
   DWORD dwTemp;
   BYTE* pbDlg = Save(dwTemp);
   HWND hDlg = CreateDialogIndirect(GetModuleHandle(0), (DLGTEMPLATE*)pbDlg, 0, 0);
-  delete [] pbDlg;
+  FreeSavedTemplate(pbDlg);
   if (!hDlg)
     throw runtime_error("Can't create dialog from template!");
 
@@ -352,6 +347,12 @@ void CDialogTemplate::PixelsToDlgUnits(short& x, short& y) {
   y = short(float(y) / (float(r.bottom)/10000));
 }
 
+void CDialogTemplate::PixelsToDlgUnits(SIZE& siz) {
+  short x = (short)siz.cx, y = (short)siz.cy;
+  PixelsToDlgUnits(x, y);
+  siz.cx = x, siz.cy = y;
+}
+
 // Converts pixels to this dialog's units
 void CDialogTemplate::DlgUnitsToPixels(short& x, short& y) {
   HWND hDlg = CreateDummyDialog();
@@ -364,7 +365,7 @@ void CDialogTemplate::DlgUnitsToPixels(short& x, short& y) {
 }
 
 // Returns the size of a string in the dialog (in dialog units)
-SIZE CDialogTemplate::GetStringSize(WORD id, char *str) {
+SIZE CDialogTemplate::GetStringSize(WORD id, TCHAR *str) {
   HWND hDlg = CreateDummyDialog();
 
   LOGFONT f;
@@ -375,19 +376,19 @@ SIZE CDialogTemplate::GetStringSize(WORD id, char *str) {
   SelectObject(memDC, font);
 
   SIZE size;
-  GetTextExtentPoint32(memDC, str, strlen(str), &size);
+  GetTextExtentPoint32(memDC, str, (int) _tcslen(str), &size);
 
   DestroyWindow(hDlg);
   DeleteObject(font);
   DeleteDC(memDC);
 
-  PixelsToDlgUnits((short&)size.cx, (short&)size.cy);
-  
+  PixelsToDlgUnits(size);
+
   return size;
 }
 
 // Trims the right margins of a control to fit a given text string size.
-void CDialogTemplate::RTrimToString(WORD id, char *str, int margins) {
+void CDialogTemplate::RTrimToString(WORD id, TCHAR *str, int margins) {
   DialogItemTemplate* item = GetItem(id);
   if (!item) return;
 
@@ -401,7 +402,7 @@ void CDialogTemplate::RTrimToString(WORD id, char *str, int margins) {
 }
 
 // Trims the left margins of a control to fit a given text string size.
-void CDialogTemplate::LTrimToString(WORD id, char *str, int margins) {
+void CDialogTemplate::LTrimToString(WORD id, TCHAR *str, int margins) {
   DialogItemTemplate* item = GetItem(id);
   if (!item) return;
 
@@ -416,7 +417,7 @@ void CDialogTemplate::LTrimToString(WORD id, char *str, int margins) {
 }
 
 // Trims the left and right margins of a control to fit a given text string size.
-void CDialogTemplate::CTrimToString(WORD id, char *str, int margins) {
+void CDialogTemplate::CTrimToString(WORD id, TCHAR *str, int margins) {
   DialogItemTemplate* item = GetItem(id);
   if (!item) return;
 
@@ -429,22 +430,19 @@ void CDialogTemplate::CTrimToString(WORD id, char *str, int margins) {
   item->sWidth = short(size.cx);
   item->sHeight = short(size.cy);
 }
-#endif
+#else //! WIN32
+void CDialogTemplate::PixelsToDlgUnits(short& x, short& y) { assert(0); }
+void CDialogTemplate::DlgUnitsToPixels(short& x, short& y) { assert(0); }
+#endif //~ WIN32
 
 // Moves every item right and gives it the WS_EX_RIGHT extended style
 void CDialogTemplate::ConvertToRTL() {
   for (unsigned int i = 0; i < m_vItems.size(); i++) {
     bool addExStyle = false;
     bool addExLeftScrollbar = true;
-    char *szClass;
-    
-    if (IS_INTRESOURCE(m_vItems[i]->szClass))
-      szClass = (char *) m_vItems[i]->szClass;
-    else
-      szClass = winchar_toansi(m_vItems[i]->szClass);
 
     // Button
-    if (long(m_vItems[i]->szClass) == 0x80) {
+    if ((ULONG_PTR)(m_vItems[i]->szClass) == 0x80) {
       m_vItems[i]->dwStyle ^= BS_LEFTTEXT;
       m_vItems[i]->dwStyle ^= BS_RIGHT;
       m_vItems[i]->dwStyle ^= BS_LEFT;
@@ -458,13 +456,13 @@ void CDialogTemplate::ConvertToRTL() {
       }
     }
     // Edit
-    else if (long(m_vItems[i]->szClass) == 0x81) {
+    else if ((ULONG_PTR)(m_vItems[i]->szClass) == 0x81) {
       if ((m_vItems[i]->dwStyle & ES_CENTER) == 0) {
         m_vItems[i]->dwStyle ^= ES_RIGHT;
       }
     }
     // Static
-    else if (long(m_vItems[i]->szClass) == 0x82) {
+    else if ((ULONG_PTR)(m_vItems[i]->szClass) == 0x82) {
       if ((m_vItems[i]->dwStyle & SS_TYPEMASK) == SS_LEFT || (m_vItems[i]->dwStyle & SS_TYPEMASK) == SS_LEFTNOWORDWRAP)
       {
         m_vItems[i]->dwStyle &= ~SS_TYPEMASK;
@@ -474,18 +472,18 @@ void CDialogTemplate::ConvertToRTL() {
         m_vItems[i]->dwStyle |= SS_CENTERIMAGE;
       }
     }
-    else if (!IS_INTRESOURCE(m_vItems[i]->szClass) && !stricmp(szClass, "RichEdit20A")) {
+    else if (!IS_INTRESOURCE(m_vItems[i]->szClass) && !WinWStrNICmpASCII(m_vItems[i]->szClass, "RichEdit20", 10)) {
       if ((m_vItems[i]->dwStyle & ES_CENTER) == 0) {
         m_vItems[i]->dwStyle ^= ES_RIGHT;
       }
     }
-    else if (!IS_INTRESOURCE(m_vItems[i]->szClass) && !stricmp(szClass, "SysTreeView32")) {
+    else if (!IS_INTRESOURCE(m_vItems[i]->szClass) && !WinWStrICmpASCII(m_vItems[i]->szClass, "SysTreeView32")) {
       m_vItems[i]->dwStyle |= TVS_RTLREADING;
       m_vItems[i]->dwExtStyle |= WS_EX_LAYOUTRTL;
       addExStyle = true;
       addExLeftScrollbar = false;
     }
-    else if (!IS_INTRESOURCE(m_vItems[i]->szClass) && !stricmp(szClass, "SysListView32")) {
+    else if (!IS_INTRESOURCE(m_vItems[i]->szClass) && !WinWStrICmpASCII(m_vItems[i]->szClass, "SysListView32")) {
       m_vItems[i]->dwExtStyle |= WS_EX_LAYOUTRTL;
       addExLeftScrollbar = false;
     }
@@ -499,9 +497,6 @@ void CDialogTemplate::ConvertToRTL() {
     m_vItems[i]->dwExtStyle |= WS_EX_RTLREADING;
 
     m_vItems[i]->sX = m_sWidth - m_vItems[i]->sWidth - m_vItems[i]->sX;
-
-    if (!IS_INTRESOURCE(m_vItems[i]->szClass))
-      delete [] szClass;
   }
   m_dwExtStyle |= WS_EX_RIGHT | WS_EX_RTLREADING | WS_EX_LEFTSCROLLBAR;
 }
@@ -571,7 +566,7 @@ BYTE* CDialogTemplate::Save(DWORD& dwSize) {
   // Write all of the items
   for (unsigned int i = 0; i < m_vItems.size(); i++) {
     // DLGITEMTEMPLATE[EX]s must be aligned on DWORD boundary
-    if (DWORD(seeker - pbDlg) % sizeof(DWORD))
+    if ((seeker - pbDlg) % sizeof(DWORD))
       seeker += sizeof(WORD);
 
     if (m_bExtended) {
@@ -605,7 +600,17 @@ BYTE* CDialogTemplate::Save(DWORD& dwSize) {
     }
 
     // Write class variant length array
-    WriteStringOrId(m_vItems[i]->szClass);
+    const WINWCHAR *szClass = m_vItems[i]->szClass;
+#ifdef _UNICODE
+    static const WINWCHAR clsRE20W[] = {'R','i','c','h','E','d','i','t','2','0','W',0};
+    static const WINWCHAR clsRE20A[] = {'R','i','c','h','E','d','i','t','2','0','A',0};
+    if (!IS_INTRESOURCE(szClass)) {
+      // transmute RichEdit20A/W control into RichEdit20T that matches the target
+      if (m_build_unicode && !WinWStrICmpASCII(szClass, "RichEdit20A")) szClass = clsRE20W;
+      if (!m_build_unicode && !WinWStrICmpASCII(szClass, "RichEdit20W")) szClass = clsRE20A;
+    }
+#endif
+    WriteStringOrId(szClass);
     // Write title variant length array
     WriteStringOrId(m_vItems[i]->szTitle);
 
@@ -622,7 +627,7 @@ BYTE* CDialogTemplate::Save(DWORD& dwSize) {
     }
   }
 
-  assert((DWORD) seeker - (DWORD) pbDlg == dwSize);
+  assert((DWORD)(seeker - pbDlg) == dwSize);
 
   // DONE!
   return pbDlg;

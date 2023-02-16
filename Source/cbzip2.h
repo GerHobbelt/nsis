@@ -3,7 +3,7 @@
  * 
  * This file is a part of NSIS.
  * 
- * Copyright (C) 1999-2009 Nullsoft and Contributors
+ * Copyright (C) 1999-2019 Nullsoft and Contributors
  * 
  * Licensed under the zlib/libpng license (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,8 @@
  * 
  * This software is provided 'as-is', without any express or implied
  * warranty.
+ * 
+ * Unicode support by Jim Park -- 08/24/2007
  */
 
 #ifndef __CBZIP2_H__
@@ -24,20 +26,20 @@ class CBzip2 : public ICompressor {
   public:
     virtual ~CBzip2() {}
 
-    int Init(int level, unsigned int dict_size) {
+    virtual int Init(int level, unsigned int dict_size) {
       last_ret = !BZ_STREAM_END;
       stream = new bz_stream;
       if (!stream) return BZ_MEM_ERROR;
       return BZ2_bzCompressInit(stream, level, 0, 30);
     }
 
-    int End() {
+    virtual int End() {
       int ret = BZ2_bzCompressEnd(stream);
       delete stream;
       return ret;
     }
 
-    int Compress(bool finish) {
+    virtual int Compress(bool finish) {
       // act like zlib when it comes to stream ending
       if (last_ret == BZ_STREAM_END && finish)
         return C_FINISHED;
@@ -49,18 +51,18 @@ class CBzip2 : public ICompressor {
       return C_OK;
     }
 
-    void SetNextIn(char *in, unsigned int size) {
-      stream->next_in = in;
+    virtual void SetNextIn(char *in, unsigned int size) {
+      stream->next_in = (unsigned char*) in;
       stream->avail_in = size;
     }
 
-    void SetNextOut(char *out, unsigned int size) {
-      stream->next_out = out;
+    virtual void SetNextOut(char *out, unsigned int size) {
+      stream->next_out = (unsigned char*) out;
       stream->avail_out = size;
     }
 
     virtual char* GetNextOut() {
-      return stream->next_out;
+      return (char*) stream->next_out;
     }
 
     virtual unsigned int GetAvailIn() {
@@ -71,23 +73,23 @@ class CBzip2 : public ICompressor {
       return stream->avail_out;
     }
 
-    const char* GetName() {
-      return "bzip2";
+    virtual const TCHAR* GetName() {
+      return _T("bzip2");
     }
 
-    const char* GetErrStr(int err) {
+    virtual const TCHAR* GetErrStr(int err) {
       switch (err)
       {
       case BZ_SEQUENCE_ERROR:
-        return "sequence error - bad call";
+        return _T("sequence error - bad call");
       case BZ_PARAM_ERROR:
-        return "parameter error - bad call";
+        return _T("parameter error - bad call");
       case BZ_MEM_ERROR:
-        return "not enough memory";
+        return _T("not enough memory");
       case BZ_CONFIG_ERROR:
-        return "config error";
+        return _T("config error");
       default:
-        return "unknown error";
+        return _T("unknown error");
       }
     }
 

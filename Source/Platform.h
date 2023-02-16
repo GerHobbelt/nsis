@@ -3,7 +3,7 @@
  * 
  * This file is a part of NSIS.
  * 
- * Copyright (C) 1999-2009 Nullsoft and Contributors
+ * Copyright (C) 1999-2019 Nullsoft and Contributors
  * 
  * Licensed under the zlib/libpng license (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,8 @@
  * 
  * This software is provided 'as-is', without any express or implied
  * warranty.
+ *
+ * Unicode support by Jim Park -- 08/13/2007
  */
 
 #ifndef ___PLATFORM__H___
@@ -19,31 +21,47 @@
 
 // some definitions for non Win32 platforms were taken from MinGW's free Win32 library
 
+
+#if defined(__cplusplus) && defined(MAKENSIS) && (!defined(_MSC_VER) || _MSC_VER > 1200)
+template<class T> class NSISCHARTYPE{ T _c; public: NSISCHARTYPE(){} NSISCHARTYPE(T c):_c(c){} operator T()const{ return _c; } };
+typedef NSISCHARTYPE<unsigned short> WINWCHAR; // WINWCHAR is always UTF16LE and should not be passed to wcs* functions
+#else
+typedef unsigned short WINWCHAR;
+#endif
+
+
 // includes
 
+#include "tchar.h"
+
 #ifdef _WIN32
-#  include <windows.h>
-#  include <commctrl.h>
-#  include <shellapi.h>
+#include <windows.h>
+#include <commctrl.h>
+#include <shellapi.h>
+#include <shlwapi.h>
+#include <shlobj.h>
 #else
+#  include <stdint.h>
 #  ifndef EXEHEAD
 #    include <string.h>
 #    include <stdlib.h>
 #  endif
 // basic types
-typedef unsigned char BYTE, *PBYTE, *LPBYTE;
-typedef unsigned short WORD, *LPWORD;
-typedef unsigned int DWORD, *LPDWORD;
-typedef short SHORT;
-typedef unsigned short USHORT;
-typedef unsigned int UINT;
-typedef unsigned int UINT32;
-typedef int INT;
-typedef int INT32;
-typedef long LONG;
-typedef unsigned long ULONG;
-typedef long long INT64, LARGE_INTEGER;
-typedef unsigned long long UINT64, ULARGE_INTEGER;
+typedef uint8_t BYTE, *PBYTE, *LPBYTE;
+typedef uint16_t WORD, *LPWORD;
+typedef uint32_t DWORD, *LPDWORD;
+typedef int16_t SHORT;
+typedef uint16_t USHORT;
+typedef uint32_t UINT;
+typedef uint32_t UINT32;
+typedef int32_t INT;
+typedef int32_t INT32;
+typedef int32_t LONG;
+typedef uint32_t ULONG;
+typedef int64_t INT64, LARGE_INTEGER;
+typedef uint64_t UINT64, ULARGE_INTEGER;
+typedef intptr_t INT_PTR;
+typedef uintptr_t UINT_PTR;
 typedef int BOOL, *LPBOOL;
 typedef short VARIANT_BOOL;
 typedef void VOID;
@@ -53,15 +71,19 @@ typedef unsigned char UCHAR;
 typedef const char *LPCCH, *PCSTR, *LPCSTR;
 typedef unsigned short WCHAR, OLECHAR, *PWCHAR, *LPWCH, *PWCH, *NWPSTR, *LPWSTR, *PWSTR, *BSTR;
 typedef const unsigned short *LPCWCH, *PCWCH, *LPCWSTR, *PCWSTR, *LPCOLESTR;
-typedef unsigned int UINT_PTR;
+#ifndef _tctime
+#define _tctime _wctime
+#else
+#define _tctime ctime
+#endif
 // basic stuff
 typedef void * HANDLE;
 typedef HANDLE HWND;
 typedef HANDLE HMODULE;
 typedef unsigned long HKEY;
 // some gdi
-typedef unsigned long COLORREF;
-typedef unsigned long HBRUSH;
+typedef DWORD COLORREF;
+typedef HANDLE HBRUSH;
 // bool
 #  define FALSE 0
 #  define TRUE 1
@@ -85,19 +107,66 @@ typedef double LONGLONG,DWORDLONG;
 typedef LONGLONG *PLONGLONG;
 typedef DWORDLONG *PDWORDLONG;
 typedef DWORDLONG ULONGLONG,*PULONGLONG;
+
+// function mapping
+#define _strdup strdup
+#define _snprintf snprintf
+#define _vsnprintf vsnprintf
+
+#endif // ?WIN32
+
+#ifndef INT_MAX
+#include <limits.h>
+#endif
+
+
+// mingw32 and w64-mingw32 do not define ULONG_PTR
+// but rather declare ULONG_PTR via typedef (see basetsd.h)
+#if !defined(__MINGW32__) && !defined(ULONG_PTR)
+#  ifndef _WIN64
+#    define ULONG_PTR unsigned long
+#  endif
+#endif
+
+#ifdef __cplusplus
+#include <algorithm>
+#if defined(_MSC_VER) && ( _MSC_VER <= 1200 || (defined(_MIN) && _MSC_FULL_VER >= 140000000 && _MSC_FULL_VER <= 140040310) )
+#define STD_MIN std::_MIN
+#define STD_MAX std::_MAX
+#else
+#define STD_MIN (std::min) // This works even when windows.h defines min/max
+#define STD_MAX (std::max)
+#endif
+#endif
+
+#ifndef COUNTOF
+#define COUNTOF(a) (sizeof(a)/sizeof(a[0]))
 #endif
 
 #ifndef __BIG_ENDIAN__
+# define FIX_ENDIAN_INT64(x) (x)
 # define FIX_ENDIAN_INT32_INPLACE(x) ((void)(x))
 # define FIX_ENDIAN_INT32(x) (x)
 # define FIX_ENDIAN_INT16_INPLACE(x) ((void)(x))
 # define FIX_ENDIAN_INT16(x) (x)
+# define BE2HE32(x) SWAP_ENDIAN_INT32(x)
 #else
+# define FIX_ENDIAN_INT64(x) SWAP_ENDIAN_INT64(x)
 # define FIX_ENDIAN_INT32_INPLACE(x) ((x) = SWAP_ENDIAN_INT32(x))
 # define FIX_ENDIAN_INT32(x) SWAP_ENDIAN_INT32(x)
 # define FIX_ENDIAN_INT16_INPLACE(x) ((x) = SWAP_ENDIAN_INT16(x))
 # define FIX_ENDIAN_INT16(x) SWAP_ENDIAN_INT16(x)
+# define BE2HE32(x) (x)
 #endif
+#define SWAP_ENDIAN_INT64(x) ( \
+  (((x)&0xFF00000000000000) >> 56) | \
+  (((x)&0x00FF000000000000) >> 40) | \
+  (((x)&0x0000FF0000000000) >> 24) | \
+  (((x)&0x000000FF00000000) >>  8) | \
+  (((x)&0x00000000FF000000) <<  8) | \
+  (((x)&0x0000000000FF0000) << 24) | \
+  (((x)&0x000000000000FF00) << 40) | \
+  (((x)&0x00000000000000FF) << 56) )
 #define SWAP_ENDIAN_INT32(x) ( \
   (((x)&0xFF000000) >> 24) | \
   (((x)&0x00FF0000) >>  8) | \
@@ -109,22 +178,22 @@ typedef DWORDLONG ULONGLONG,*PULONGLONG;
 
 // script path separator
 
-#  define PATH_SEPARATOR_STR "\\"
-#  define PATH_SEPARATOR_C '\\'
+#  define PATH_SEPARATOR_STR _T("\\")
+#  define PATH_SEPARATOR_C _T('\\')
 
 // system specific characters
 
 #ifdef _WIN32
-#  define PLATFORM_PATH_SEPARATOR_STR "\\"
-#  define PLATFORM_PATH_SEPARATOR_C '\\'
-#  define OPT_STR "/"
-#  define OPT_C '/'
-#  define IS_OPT(a) (a[0]==OPT_C||a[0]=='-')
+#  define PLATFORM_PATH_SEPARATOR_STR _T("\\")
+#  define PLATFORM_PATH_SEPARATOR_C _T('\\')
+#  define OPT_STR _T("/")
+#  define OPT_C _T('/')
+#  define IS_OPT(a) (a[0]==OPT_C||a[0]==_T('-'))
 #else
-#  define PLATFORM_PATH_SEPARATOR_STR "/"
-#  define PLATFORM_PATH_SEPARATOR_C '/'
-#  define OPT_STR "-"
-#  define OPT_C '-'
+#  define PLATFORM_PATH_SEPARATOR_STR _T("/")
+#  define PLATFORM_PATH_SEPARATOR_C _T('/')
+#  define OPT_STR _T("-")
+#  define OPT_C _T('-')
 #  define IS_OPT(a) (a[0]==OPT_C)
 #endif
 
@@ -154,35 +223,60 @@ typedef DWORDLONG ULONGLONG,*PULONGLONG;
 
 #ifndef _WIN32
 #  ifndef FIELD_OFFSET
-#    define FIELD_OFFSET(t,f) ((LONG)&(((t*)0)->f))
+#    define FIELD_OFFSET(t,f) ((UINT_PTR)&(((t*)0)->f))
 #  endif
 #  ifndef MAKEINTRESOURCEA
-#    define MAKEINTRESOURCEA(i) ((LPSTR)((ULONG_PTR)((WORD)(i))))
+#    define MAKEINTRESOURCEA(i) ((LPSTR)((ULONG_PTR)((WORD)(ULONG_PTR)(i))))
 #  endif
 #  ifndef MAKEINTRESOURCEW
-#    define MAKEINTRESOURCEW(i) ((LPWSTR)((ULONG_PTR)((WORD)(i))))
+#    define MAKEINTRESOURCEW(i) ((LPWSTR)((ULONG_PTR)((WORD)(ULONG_PTR)(i))))
 #  endif
 #  ifndef MAKEINTRESOURCE
-#    define MAKEINTRESOURCE MAKEINTRESOURCEA
+#    ifdef _UNICODE
+#      define MAKEINTRESOURCE MAKEINTRESOURCEW
+#    else
+#      define MAKEINTRESOURCE MAKEINTRESOURCEA
+#    endif
 #  endif
 #  ifndef IMAGE_FIRST_SECTION
-#    define IMAGE_FIRST_SECTION(h) ( PIMAGE_SECTION_HEADER( (DWORD) h + \
+#    define IMAGE_FIRST_SECTION(h) ( PIMAGE_SECTION_HEADER( (ULONG_PTR) h + \
                                      FIELD_OFFSET(IMAGE_NT_HEADERS, OptionalHeader) + \
                                      FIX_ENDIAN_INT16(PIMAGE_NT_HEADERS(h)->FileHeader.SizeOfOptionalHeader) ) )
 #  endif
 #  ifndef RGB
 #    define RGB(r,g,b) ((DWORD)(((BYTE)(r)|((WORD)(g)<<8))|(((DWORD)(BYTE)(b))<<16)))
 #  endif
+#  ifndef LOBYTE
+#    define LOBYTE(w) ((BYTE)(w))
+#    define HIBYTE(w) ((BYTE)(((WORD)(w)>>8)&0xFF))
+#  endif
+#  ifndef MAKEWORD
+#    define MAKEWORD(a,b) ((WORD)(((BYTE)(a))|(((WORD)((BYTE)(b)))<<8)))
+#  endif
 #  ifndef MAKELONG
-#    define MAKELONG(a,b) ((LONG)(((WORD)(a))|(((DWORD)((WORD)(b)))<<16)))
+#    define MAKELONG(a,b) ((DWORD)(((WORD)(a))|(((DWORD)((WORD)(b)))<<16)))
 #  endif
 #endif
 #ifndef IS_INTRESOURCE
 #  define IS_INTRESOURCE(_r) (((ULONG_PTR)(_r) >> 16) == 0)
 #endif
 
+#ifndef IS_HIGH_SURROGATE
+#  define IS_HIGH_SURROGATE(wch) (((wch) >= 0xd800) && ((wch) <= 0xdbff))
+#endif
+
 // functions
 
+// Anders: MSVC's swprintf is non standard, use _snwprintf when you really mean swprintf
+#if !defined(_MSC_VER) && !defined(__MINGW32__) && !defined(_snwprintf)
+#  define _snwprintf swprintf // (wchar_t*,size_t,const wchar_t*,...)
+#endif
+#ifndef _WIN32
+#  define _vsnwprintf vswprintf // (wchar_t*,size_t,const wchar_t*,va_list)
+#endif
+
+// Jim Park: These str functions will probably never be encountered with all my
+// Unicode changes.  And if they were used, these would probably be wrong.
 #ifndef _WIN32
 #  define stricmp strcasecmp
 #  define strcmpi strcasecmp
@@ -191,14 +285,21 @@ typedef DWORDLONG ULONGLONG,*PULONGLONG;
 #  define ZeroMemory(x, y) memset(x, 0, y)
 #endif
 
-// defines
-
-#ifndef FOF_NOERRORUI
-#  define FOF_NOERRORUI 0x0400
+#ifndef _WIN64
+#  ifndef GCLP_HICON
+#    define GCLP_HICON GCL_HICON
+#    define SetClassLongPtr SetClassLong
+#  endif
 #endif
 
-#ifndef ULONG_PTR
-#  define ULONG_PTR DWORD
+// defines
+
+#ifndef MEM_LARGE_PAGES
+#  define MEM_LARGE_PAGES 0x20000000
+#endif
+
+#ifndef WC_NO_BEST_FIT_CHARS
+#  define WC_NO_BEST_FIT_CHARS 0x400
 #endif
 
 #ifndef IDC_HAND
@@ -227,10 +328,13 @@ typedef DWORDLONG ULONGLONG,*PULONGLONG;
 
 #ifndef EXEHEAD
 #  ifndef SF_TEXT
-#    define SF_TEXT 1
+#    define SF_TEXT 0x0001
 #  endif
 #  ifndef SF_RTF
-#    define SF_RTF 2
+#    define SF_RTF 0x0002
+#  endif
+#  ifndef SF_UNICODE
+#    define SF_UNICODE 0x0010
 #  endif
 #endif
 
@@ -238,7 +342,7 @@ typedef DWORDLONG ULONGLONG,*PULONGLONG;
 #  undef INVALID_FILE_ATTRIBUTES
 #endif
 #ifndef INVALID_FILE_ATTRIBUTES
-#  define INVALID_FILE_ATTRIBUTES ((unsigned long) -1)
+#  define INVALID_FILE_ATTRIBUTES ((DWORD) -1)
 #endif
 
 // shell folders
@@ -384,16 +488,30 @@ typedef DWORDLONG ULONGLONG,*PULONGLONG;
 #  define CSIDL_CDBURN_AREA 0x3B
 #endif
 
+#ifndef SHGFP_TYPE_CURRENT
+  #define SHGFP_TYPE_CURRENT 0
+#endif
+
 // other shell stuff
 
 #ifndef SHACF_FILESYSTEM
 #  define SHACF_FILESYSTEM 1
 #endif
 
+#ifndef SEE_MASK_NOCLOSEPROCESS
+#define SEE_MASK_NOCLOSEPROCESS 0x00000040
+#define SEE_MASK_FLAG_NO_UI     0x00000400
+#define SEE_MASK_FLAG_DDEWAIT   0x00000100
+#endif
+
 // other stuff
 
 #ifndef CP_ACP
 #  define CP_ACP 0
+#  define CP_OEMCP 1
+#endif
+#ifndef CP_UTF8
+#  define CP_UTF8 65001
 #endif
 
 #ifndef COLOR_BTNFACE
@@ -402,9 +520,16 @@ typedef DWORDLONG ULONGLONG,*PULONGLONG;
 #ifndef COLOR_WINDOW
 #  define COLOR_WINDOW 5
 #endif
+#ifndef COLOR_HOTLIGHT
+#  define COLOR_HOTLIGHT 26
+#endif
 
 // resources
 
+#ifndef RT_CURSOR
+#  define RT_CURSOR MAKEINTRESOURCE(1)
+#  define RT_GROUP_CURSOR MAKEINTRESOURCE(1 + 11)
+#endif
 #ifndef RT_BITMAP
 #  define RT_BITMAP MAKEINTRESOURCE(2)
 #endif
@@ -415,7 +540,7 @@ typedef DWORDLONG ULONGLONG,*PULONGLONG;
 #  define RT_DIALOG MAKEINTRESOURCE(5)
 #endif
 #ifndef RT_GROUP_ICON
-#  define RT_GROUP_ICON MAKEINTRESOURCE(14)
+#  define RT_GROUP_ICON MAKEINTRESOURCE(3 + 11)
 #endif
 #ifndef RT_VERSION
 #  define RT_VERSION MAKEINTRESOURCE(16)
@@ -533,8 +658,20 @@ typedef DWORDLONG ULONGLONG,*PULONGLONG;
 #  define HKEY_DYN_DATA ((HKEY)0x80000006)
 #endif
 
+#ifndef KEY_WOW64_32KEY
+#  define KEY_WOW64_32KEY 0x200
+#endif
 #ifndef KEY_WOW64_64KEY
 #  define KEY_WOW64_64KEY 0x100
+#endif
+
+#ifndef REG_SZ
+#  define REG_NONE 0
+#  define REG_SZ 1
+#  define REG_EXPAND_SZ 2
+#  define REG_BINARY 3
+#  define REG_DWORD 4
+#  define REG_MULTI_SZ 7
 #endif
 
 // show modes
@@ -545,6 +682,7 @@ typedef DWORDLONG ULONGLONG,*PULONGLONG;
 #  define SW_SHOWMINIMIZED 2
 #  define SW_SHOWMAXIMIZED 3
 #  define SW_SHOWNOACTIVATE 4
+#  define SW_SHOW 5
 #  define SW_SHOWMINNOACTIVE 7
 #  define SW_SHOWNA 8
 #  define SW_RESTORE 9
@@ -607,6 +745,9 @@ typedef DWORDLONG ULONGLONG,*PULONGLONG;
 #  define FOF_SIMPLEPROGRESS 256
 #  define FOF_NOCONFIRMMKDIR 512
 #endif
+#ifndef FOF_NOERRORUI
+#  define FOF_NOERRORUI 0x0400
+#endif
 
 // file attribs
 
@@ -620,14 +761,6 @@ typedef DWORDLONG ULONGLONG,*PULONGLONG;
 #  define FILE_ATTRIBUTE_OFFLINE 0x00001000
 #endif
 
-// registry
-
-#ifndef REG_SZ
-#  define REG_SZ 1
-#  define REG_EXPAND_SZ 2
-#  define REG_BINARY 3
-#  define REG_DWORD 4
-#endif
 
 // fopen
 #ifndef GENERIC_READ
@@ -665,6 +798,21 @@ typedef DWORDLONG ULONGLONG,*PULONGLONG;
 #  define IMAGE_DIRECTORY_ENTRY_EXPORT 0
 #  define IMAGE_SIZEOF_SHORT_NAME 8
 #endif
+#ifndef IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE
+#define IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE 0x0040 // ASLR
+#endif
+#ifndef IMAGE_DLLCHARACTERISTICS_NX_COMPAT
+#define IMAGE_DLLCHARACTERISTICS_NX_COMPAT 0x0100 // DEP
+#endif
+#ifndef IMAGE_DLLCHARACTERISTICS_NO_SEH
+#define IMAGE_DLLCHARACTERISTICS_NO_SEH 0x0400
+#endif
+#ifndef IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE
+#define IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE 0x8000
+#endif
+#ifndef IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA
+#define IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA 0x0020 // HEASLR
+#endif
 
 // structures
 
@@ -683,7 +831,7 @@ typedef struct _LOGFONT {
   BYTE lfClipPrecision;
   BYTE lfQuality;
   BYTE lfPitchAndFamily;
-  CHAR lfFaceName[LF_FACESIZE];
+  TCHAR lfFaceName[LF_FACESIZE];
 } LOGFONT;
 #  pragma pack(2)
 typedef struct _IMAGE_DOS_HEADER {
@@ -722,7 +870,7 @@ typedef struct _IMAGE_DATA_DIRECTORY {
   DWORD VirtualAddress;
   DWORD Size;
 } IMAGE_DATA_DIRECTORY,*PIMAGE_DATA_DIRECTORY;
-typedef struct _IMAGE_OPTIONAL_HEADER {
+typedef struct _IMAGE_OPTIONAL_HEADER32 {
   WORD Magic;
   BYTE MajorLinkerVersion;
   BYTE MinorLinkerVersion;
@@ -787,26 +935,34 @@ typedef struct _IMAGE_OPTIONAL_HEADER64 {
   DWORD NumberOfRvaAndSizes;
   IMAGE_DATA_DIRECTORY DataDirectory[IMAGE_NUMBEROF_DIRECTORY_ENTRIES];
 } IMAGE_OPTIONAL_HEADER64,*PIMAGE_OPTIONAL_HEADER64;
+typedef struct _IMAGE_NT_HEADERS32 {
+  DWORD Signature;
+  IMAGE_FILE_HEADER FileHeader;
+  IMAGE_OPTIONAL_HEADER32 OptionalHeader;
+} IMAGE_NT_HEADERS32,*PIMAGE_NT_HEADERS32;
+typedef struct _IMAGE_NT_HEADERS64 {
+  DWORD Signature;
+  IMAGE_FILE_HEADER FileHeader;
+  IMAGE_OPTIONAL_HEADER64 OptionalHeader;
+} IMAGE_NT_HEADERS64,*PIMAGE_NT_HEADERS64;
 #ifdef _WIN64
-typedef IMAGE_OPTIONAL_HEADER64         IMAGE_OPTIONAL_HEADER;
-typedef PIMAGE_OPTIONAL_HEADER64        PIMAGE_OPTIONAL_HEADER;
+typedef IMAGE_OPTIONAL_HEADER64  IMAGE_OPTIONAL_HEADER;
+typedef PIMAGE_OPTIONAL_HEADER64 PIMAGE_OPTIONAL_HEADER;
+typedef IMAGE_NT_HEADERS64 IMAGE_NT_HEADERS;
+typedef PIMAGE_NT_HEADERS64 PIMAGE_NT_HEADERS;
 #else
-typedef IMAGE_OPTIONAL_HEADER32         IMAGE_OPTIONAL_HEADER;
-typedef PIMAGE_OPTIONAL_HEADER32        PIMAGE_OPTIONAL_HEADER;
+typedef IMAGE_OPTIONAL_HEADER32  IMAGE_OPTIONAL_HEADER;
+typedef PIMAGE_OPTIONAL_HEADER32 PIMAGE_OPTIONAL_HEADER;
+typedef IMAGE_NT_HEADERS32  IMAGE_NT_HEADERS;
+typedef PIMAGE_NT_HEADERS32 PIMAGE_NT_HEADERS;
 #endif
 #ifndef __BIG_ENDIAN__
-#  define IMAGE_NT_OPTIONAL_HDR32_MAGIC 0x10b
-#  define IMAGE_NT_OPTIONAL_HDR64_MAGIC 0x20b
+#  define IMAGE_NT_OPTIONAL_HDR32_MAGIC 0x010b
+#  define IMAGE_NT_OPTIONAL_HDR64_MAGIC 0x020b
 #else
 #  define IMAGE_NT_OPTIONAL_HDR32_MAGIC 0x0b01
 #  define IMAGE_NT_OPTIONAL_HDR64_MAGIC 0x0b02
 #endif
-#define IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE 0x8000
-typedef struct _IMAGE_NT_HEADERS {
-  DWORD Signature;
-  IMAGE_FILE_HEADER FileHeader;
-  IMAGE_OPTIONAL_HEADER OptionalHeader;
-} IMAGE_NT_HEADERS,*PIMAGE_NT_HEADERS;
 typedef struct _IMAGE_SECTION_HEADER {
   BYTE Name[IMAGE_SIZEOF_SHORT_NAME];
  union {
@@ -853,8 +1009,108 @@ typedef struct tagVS_FIXEDFILEINFO {
 #  pragma pack()
 #endif
 
-#ifndef SHGFP_TYPE_CURRENT
-  #define SHGFP_TYPE_CURRENT 0
+
+// MinGW does not implement the unicode CRT startup functions
+#if (defined(_UNICODE) && defined(_WIN32)) && defined(__MINGW32__)
+#  define NSIS_ENTRYPOINT_TMAIN \
+    int _tmain(int argc,WCHAR**argv); \
+    EXTERN_C int main(int ac,char**cav) { \
+      WCHAR**av=CommandLineToArgvW(GetCommandLineW(),&ac); \
+      if (!av) { \
+        _tprintf(_T("wmain: Error %u\n"),ac = GetLastError()); \
+        return ac; \
+      } \
+      ac = _tmain(ac,av); \
+      /*LEAK: LocalFree(av);*/ \
+      return ac; \
+    }
+#  define NSIS_ENTRYPOINT_SIMPLEGUI \
+     int WINAPI _tWinMain(HINSTANCE hI,HINSTANCE hOld,LPTSTR cl,int sc); \
+     EXTERN_C int WINAPI WinMain(HINSTANCE hI,HINSTANCE hOld,char*cl,int sc) \
+     {return _tWinMain(hI,0,0,sc);}
+#  ifdef __cplusplus
+#    define NSIS_ENTRYPOINT_GUINOCRT \
+       EXTERN_C void NSISWinMainNOCRT(); \
+       int WINAPI WinMain(HINSTANCE hI,HINSTANCE hOld,char*cl,int sc) \
+       {NSISWinMainNOCRT();return 0;}
+#  endif
+#endif
+#ifndef NSIS_ENTRYPOINT_TMAIN
+#  define NSIS_ENTRYPOINT_TMAIN
+#endif
+#ifndef NSIS_ENTRYPOINT_SIMPLEGUI // _tWinMain with valid hInstance, calls ExitProcess
+#  define NSIS_ENTRYPOINT_SIMPLEGUI
+#endif
+#ifndef NSIS_ENTRYPOINT_GUINOCRT
+#  define NSIS_ENTRYPOINT_GUINOCRT
 #endif
 
+
+#if defined(__clang__) && defined(__cplusplus) && __cplusplus < 201103L
+#  define NSIS_CXX_THROWSPEC(throwspec) throw(throwspec) // Use exception specifications to avoid operator new missing-exception-spec warning
+#else
+#  define NSIS_CXX_THROWSPEC(ignoredthrowspec) // Ignore c++ exception specifications
 #endif
+#if defined(__cplusplus) && __cplusplus >= 201103L
+#  define NSIS_CXX_NOEXCEPT() noexcept(true)
+#else
+#  define NSIS_CXX_NOEXCEPT() throw() // Can't specialize __declspec(nothrow) because MSVC requires it before the function name
+#endif
+#if defined(_MSC_VER) && _MSC_VER <= 1200
+#  define NSIS_CXX_TYPENAME // VC6 can't handle typename in some places but GCC requires it
+#else
+#  define NSIS_CXX_TYPENAME typename
+#endif
+#define BUGBUG64TRUNCATE(cast,xpr) ( (cast) (xpr) )
+
+/*
+_tprintf on Windows/MSVCRT treats %s as TCHAR* and on POSIX %s is always char*!
+Always use our NPRI* (NsisPRInt*[Narrow|Wide]) defines in format strings when calling 
+functions from tchar.h (Similar to the way <inttypes.h> works)
+
+Example: _tprintf(_T("%") NPRIs _T(" %") NPRIws _T("\n"), _T("Hello"), L"World");
+*/
+#ifdef _WIN32
+#  define NPRIs _T("s")
+#  define NPRIns _T("hs")
+#  define NPRIws _T("ls") // ws also works, not sure which is most compatible
+#  ifndef _WIN64
+#    define NPRIp _T(".8x")
+#    define NPRIpN ".8x"
+#  endif
+#else  // !_WIN32
+#  define NPRIns _T("s")
+#  define NPRIws _T("ls")
+#  ifdef _UNICODE
+#    define NPRIs _T("ls")
+#  else // !_UNICODE
+#    define NPRIs _T("s")
+#  endif // ~_UNICODE
+#endif // ~_WIN32
+#ifndef NPRIp
+#  define NPRIp _T("p")
+#  define NPRIpN "p"
+#endif
+
+
+// Disable deprecated warnings (Windows SDK for Windows 8.1)
+#ifdef _MSC_VER
+#if _MSC_VER >= 1500
+FORCEINLINE DWORD NoDepr_GetVersion() { __pragma(warning(push))__pragma(warning(disable:4996)) DWORD r = GetVersion(); __pragma(warning(pop)) return r; }
+#define GetVersion NoDepr_GetVersion
+FORCEINLINE BOOL NoDepr_GetVersionExA(OSVERSIONINFOA*p) { __pragma(warning(push))__pragma(warning(disable:4996)) BOOL r = GetVersionExA(p); __pragma(warning(pop)) return r; }
+#define GetVersionExA NoDepr_GetVersionExA
+FORCEINLINE BOOL NoDepr_GetVersionExW(OSVERSIONINFOW*p) { __pragma(warning(push))__pragma(warning(disable:4996)) BOOL r = GetVersionExW(p); __pragma(warning(pop)) return r; }
+#define GetVersionExW NoDepr_GetVersionExW
+#endif //~ _MSC_VER >= 1500
+#endif //~ _MSC_VER
+
+
+#ifdef __cplusplus
+namespace STL
+{
+  template<class M> struct mapped_type { typedef typename M::value_type::second_type type; }; // VC6 uses referent_type and not mapped_type
+}
+#endif //~ __cplusplus
+
+#endif // EOF

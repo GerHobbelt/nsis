@@ -2,13 +2,18 @@
  * This file is a part of the zlib compression module for NSIS.
  * 
  * Copyright and license information can be found below.
- * Modifications Copyright (C) 1999-2009 Nullsoft and Contributors
+ * Modifications Copyright (C) 1999-2019 Nullsoft and Contributors
  * 
  * The original zlib source code is available at
  * http://www.zlib.net/
  * 
  * This software is provided 'as-is', without any express or implied
  * warranty.
+ *
+ * Reviewed for Unicode support by Jim Park -- 08/27/2007
+ * The messages generated here are mostly #def'ed out, but are used
+ * when debugging.  So in order for the messages to be viewable in
+ * Unicode version, using TCHAR macros.
  */
 
 /* zutil.h -- internal interface and configuration of the compression library
@@ -21,13 +26,14 @@
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: ZUTIL.H,v 1.5 2007/01/13 17:28:23 kichik Exp $ */
+/* @(#) $Id: ZUTIL.H,v 1.6 2007/01/25 18:07:40 kichik Exp $ */
 
 #ifndef _Z_UTIL_H
 #define _Z_UTIL_H
 
 #include "../Platform.h"
 #include "ZLIB.H"
+#include "../tchar.h"
 
 #ifndef local
 #  define local static
@@ -63,6 +69,7 @@ typedef unsigned long  ulg;
 #    include "../exehead/util.h"
 #    define zmemcpy mini_memcpy
 #  else
+#    include <string.h> // Avoid "incompatible implicit declaration of built-in function"
 #    define zmemcpy memcpy
 #  endif
 #else

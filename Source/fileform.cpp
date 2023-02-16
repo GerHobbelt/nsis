@@ -3,7 +3,7 @@
  * 
  * This file is a part of NSIS.
  * 
- * Copyright (C) 1999-2009 Nullsoft and Contributors
+ * Copyright (C) 1999-2019 Nullsoft and Contributors
  * 
  * Licensed under the zlib/libpng license (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,9 @@
 
 #include <cassert>
 
-// these functions MUST be synchronized with the structures in Source/exehead/fileform.h !
-// data must be written in the same order it's defined in Source/exehead/fileform.h
-// in the future, i hope to get one of the two automtaically generated from the other
+// These functions MUST be synchronized with the structures in Source/exehead/fileform.h !
+// Data must be written in the same order it's defined in Source/exehead/fileform.h
+// In the future, I hope to get one of the two automatically generated from the other
 
 void firstheader_writer::write(const firstheader *data)
 {
@@ -33,20 +33,23 @@ void firstheader_writer::write(const firstheader *data)
   m_sink->write_int(data->length_of_all_following_data);
 }
 
-void block_header_writer::write(const block_header *data)
+void block_header_writer::write(const block_header *data, const writer_target_info&ti)
 {
-  m_sink->write_int(data->offset);
+  if (ti.is_64bit())
+    m_sink->write_int64(data->offset);
+  else
+    m_sink->write_int(data->offset);
   m_sink->write_int(data->num);
 }
 
-void header_writer::write(const header *data)
+void header_writer::write(const header *data, const writer_target_info&ti)
 {
   m_sink->write_int(data->flags);
 
   block_header_writer bw(writer::m_sink);
   for (int i = 0; i < BLOCKS_NUM; i++)
   {
-    bw.write(&data->blocks[i]);
+    bw.write(&data->blocks[i], ti);
   }
 
   m_sink->write_int(data->install_reg_rootkey);
@@ -144,14 +147,26 @@ void page_writer::write(const page *data)
   m_sink->write_int_array(data->parms, 5);
 }
 
-void ctlcolors_writer::write(const ctlcolors *data)
+void ctlcolors_writer::write(const ctlcolors *data, const writer_target_info&ti)
 {
-  m_sink->write_int(data->text);
-  m_sink->write_int(data->bkc);
-  m_sink->write_int(data->lbStyle);
-  m_sink->write_int((int) data->bkb);
-  m_sink->write_int(data->bkmode);
-  m_sink->write_int(data->flags);
+  assert(CC_FLAGSMASK >> CC_FLAGSSHIFTFORZERO == 0);
+  assert(sizeof(int) == 4 && sizeof(ctlcolors64) > sizeof(ctlcolors32));
+  const ctlcolors *p = data;
+  m_sink->write_int(p->text);
+  m_sink->write_int(p->bkc);
+  if (ti.is_64bit())
+  {
+    assert(!p->bkb);
+    m_sink->write_int64(p->bkb);
+    m_sink->write_int(p->lbStyle);
+  }
+  else
+  {
+    m_sink->write_int(p->lbStyle);
+    m_sink->write_int(p->bkb);
+  }
+  m_sink->write_int(p->bkmode);
+  m_sink->write_int(p->flags);
 }
 
 void LOGFONT_writer::write(const LOGFONT *data)
@@ -184,6 +199,7 @@ void lang_table_writer::write(const unsigned char *data)
 void lang_table_writer::write_block(IGrowBuf *buf, writer_sink *sink, const size_t table_size)
 {
   unsigned char *tables = (unsigned char *) buf->get();
+  // langtable has LANGID(WORD) + dlgoffset(int) + right-to-left(int) + string pointers.
   size_t lang_strings = ( table_size - 2 * sizeof(int) - sizeof(LANGID) ) / sizeof(int);
   size_t l = buf->getlen() / table_size;
   lang_table_writer writer(sink, lang_strings);

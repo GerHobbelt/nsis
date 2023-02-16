@@ -2,7 +2,7 @@
  * This file is a part of the bzip2 compression module for NSIS.
  * 
  * Copyright and license information can be found below.
- * Modifications Copyright (C) 1999-2009 Nullsoft and Contributors
+ * Modifications Copyright (C) 1999-2019 Nullsoft and Contributors
  * 
  * The original zlib source code is available at
  * http://www.bzip.org/
@@ -11,6 +11,8 @@
  * 
  * This software is provided 'as-is', without any express or implied
  * warranty.
+ *
+ * Reviewed for Unicode support by Jim Park -- 08/27/2007
  */
 
 /*-------------------------------------------------------------*/
@@ -139,15 +141,16 @@ typedef unsigned short  UInt16;
 
 #ifndef EXEHEAD
 
+#include <stdlib.h>
 #define BZALLOC(items) malloc(items)
 #define BZFREE(addr)  { if (addr) free(addr); }
 #define mini_memcpy memcpy
 
 typedef struct {
-  char *next_in;
+  unsigned char *next_in;
   unsigned int avail_in;
 
-  char *next_out;
+  unsigned char *next_out;
   unsigned int avail_out;
 
   void *state;
@@ -323,10 +326,10 @@ typedef struct {
 
 typedef struct {
   /* pointer back to the struct bz_stream */
-  char *next_in;
+  unsigned char *next_in;
   unsigned int avail_in;
 
-  char *next_out;
+  unsigned char *next_out;
   unsigned int avail_out;
 
   /* state indicator for this stream */

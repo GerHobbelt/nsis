@@ -2,7 +2,7 @@
  * This file is a part of the bzip2 compression module for NSIS.
  * 
  * Copyright and license information can be found below.
- * Modifications Copyright (C) 1999-2009 Nullsoft and Contributors
+ * Modifications Copyright (C) 1999-2019 Nullsoft and Contributors
  * 
  * The original zlib source code is available at
  * http://www.bzip.org/
@@ -11,6 +11,8 @@
  * 
  * This software is provided 'as-is', without any express or implied
  * warranty.
+ *
+ * Reviewed for Unicode support by Jim Park -- 08/23/2007
  */
 
 #include "bzlib.h"
@@ -518,7 +520,7 @@ static void NSISCALL unRLE_obuf_to_output_FAST ( DState* s )
       Int32         c_k0                 = s->k0;
       UInt32        c_tPos               = s->tPos;
 
-      char*         cs_next_out          = s->next_out;
+      char*         cs_next_out          = (char*) s->next_out;
       unsigned int  cs_avail_out         = s->avail_out;
       /* end restore */
 
@@ -581,7 +583,7 @@ static void NSISCALL unRLE_obuf_to_output_FAST ( DState* s )
       s->nblock_used        = c_nblock_used;
       s->k0                 = c_k0;
       s->tPos               = c_tPos;
-      s->next_out     = cs_next_out;
+      s->next_out     = (unsigned char*) cs_next_out;
       s->avail_out    = cs_avail_out;
       /* end save */
 }

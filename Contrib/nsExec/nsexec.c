@@ -17,11 +17,20 @@ freely, subject to the following restrictions:
    misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 
+Unicode support by Jim Park -- 08/24/2007
+
 */
 #include <windows.h>
 #include <commctrl.h>
 #include <winnt.h>
 #include <nsis/pluginapi.h> // nsis plugin
+
+#if defined(_MSC_VER) && !defined(GetVersion)
+#if _MSC_VER >= 1500
+FORCEINLINE DWORD NoDepr_GetVersion() { __pragma(warning(push))__pragma(warning(disable:4996)) DWORD r = GetVersion(); __pragma(warning(pop)) return r; }
+#define GetVersion NoDepr_GetVersion
+#endif //~ _MSC_VER >= 1500
+#endif //~ _MSC_VER
 
 #ifndef true
 #define true TRUE
@@ -29,17 +38,18 @@ freely, subject to the following restrictions:
 #ifndef false
 #define false FALSE
 #endif
-#define LOOPTIMEOUT  100
 
-HWND          g_hwndParent;
-HWND          g_hwndList;
+#define LOOPTIMEOUT  100
+HWND g_hwndParent;
+HWND g_hwndList;
 
 void ExecScript(BOOL log);
-void LogMessage(const char *pStr, BOOL bOEM);
-char *my_strstr(char *a, char *b);
-unsigned int my_atoi(char *s);
+void LogMessage(const TCHAR *pStr, BOOL bOEM);
+TCHAR *my_strstr(TCHAR *a, TCHAR *b);
+unsigned int my_atoi(TCHAR *s);
+int WINAPI AsExeWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow);
 
-void __declspec(dllexport) Exec(HWND hwndParent, int string_size, char *variables, stack_t **stacktop) {
+void __declspec(dllexport) Exec(HWND hwndParent, int string_size, TCHAR *variables, stack_t **stacktop) {
   g_hwndParent=hwndParent;
   EXDLL_INIT();
   {
@@ -47,7 +57,7 @@ void __declspec(dllexport) Exec(HWND hwndParent, int string_size, char *variable
   }
 }
 
-void __declspec(dllexport) ExecToLog(HWND hwndParent, int string_size, char *variables, stack_t **stacktop) {
+void __declspec(dllexport) ExecToLog(HWND hwndParent, int string_size, TCHAR *variables, stack_t **stacktop) {
   g_hwndParent=hwndParent;
   EXDLL_INIT();
   {
@@ -55,7 +65,7 @@ void __declspec(dllexport) ExecToLog(HWND hwndParent, int string_size, char *var
   }
 }
 
-void __declspec(dllexport) ExecToStack(HWND hwndParent, int string_size, char *variables, stack_t **stacktop) {
+void __declspec(dllexport) ExecToStack(HWND hwndParent, int string_size, TCHAR *variables, stack_t **stacktop) {
   g_hwndParent=hwndParent;
   EXDLL_INIT();
   {
@@ -64,63 +74,97 @@ void __declspec(dllexport) ExecToStack(HWND hwndParent, int string_size, char *v
 }
 
 HINSTANCE g_hInst;
-BOOL WINAPI DllMain(HANDLE hInst, ULONG ul_reason_for_call, LPVOID lpReserved) {
+BOOL WINAPI DllMain(HINSTANCE hInst, ULONG ul_reason_for_call, LPVOID lpReserved) {
   g_hInst = hInst;
   return TRUE;
 }
 
-#define TAB_REPLACE "        "
+#define TAB_REPLACE _T("        ")
 #define TAB_REPLACE_SIZE (sizeof(TAB_REPLACE)-1)
 
-// Turn a pair of chars into a word
-// Turn four chars into a dword
-#ifdef __BIG_ENDIAN__ // Not very likely, but, still...
-#define CHAR2_TO_WORD(a,b) (((WORD)(b))|((a)<<8))
-#define CHAR4_TO_DWORD(a,b,c,d)	(((DWORD)CHAR2_TO_WORD(c,d))|(CHAR2_TO_WORD(a,b)<<16))
+static BOOL IsWOW64() {
+#ifdef _WIN64
+  return FALSE;
 #else
-#define CHAR2_TO_WORD(a,b) (((WORD)(a))|((b)<<8))
-#define CHAR4_TO_DWORD(a,b,c,d)	(((DWORD)CHAR2_TO_WORD(a,b))|(CHAR2_TO_WORD(c,d)<<16))
+  typedef BOOL (WINAPI*ISWOW64PROCESS)(HANDLE, BOOL*);
+  ISWOW64PROCESS pfIsWow64Process;
+  typedef BOOL (WINAPI*ISWOW64PROCESS2)(HANDLE, USHORT*, USHORT*);
+  ISWOW64PROCESS2 pfIsWow64Process2;
+  HANDLE hProcess = GetCurrentProcess();
+  HMODULE hK32 = GetModuleHandleA("KERNEL32");
+  UINT_PTR retval;
+  USHORT appmach, image_file_machine_unknown = 0;
+  CHAR funcnam[16]
+#if defined(_MSC_VER) && (_MSC_VER-0 <= 1400)
+    = "IsWow64Process2"; // MOVSD * 4
+#else
+    ; lstrcpyA(funcnam, "IsWow64Process2");
 #endif
-
-BOOL IsWOW64() {
-  typedef BOOL (WINAPI *LPFN_ISWOW64PROCESS) (HANDLE, PBOOL);
-  BOOL wow64;
-  LPFN_ISWOW64PROCESS fnIsWow64Process;
-
-  fnIsWow64Process = (LPFN_ISWOW64PROCESS) GetProcAddress(
-    GetModuleHandle("kernel32"), "IsWow64Process");
-
-  if (fnIsWow64Process != NULL) {
-    if (fnIsWow64Process(GetCurrentProcess(), &wow64)) {
-      return wow64;
+  pfIsWow64Process2 = (ISWOW64PROCESS2) GetProcAddress(hK32, funcnam);
+  if (pfIsWow64Process2 && pfIsWow64Process2(hProcess, &appmach, NULL)) {
+    retval = image_file_machine_unknown != appmach;
+  }
+  else {
+    BOOL wow64;
+    pfIsWow64Process = (ISWOW64PROCESS) GetProcAddress(hK32, (funcnam[14] = '\0', funcnam));
+    retval = (UINT_PTR) pfIsWow64Process;
+    if (pfIsWow64Process && (retval = pfIsWow64Process(hProcess, &wow64))) {
+      retval = wow64;
     }
   }
+  return (BOOL) (UINT) retval;
+#endif
+}
 
-  return FALSE;
+/**
+ * Convert the ansiStr if storing ANSI strings, otherwise, assume that the
+ * string is wide and don't convert, but straight copy.
+ * @param ansiStr [in]  the suspected ANSI string.
+ * @param wideBuf [out] the buffer to write to.
+ * @param cnt     [in]  the size of widebuf in wchar_t's.
+ * @return true, if ASCII, false if suspected as wide.
+ */
+BOOL WideConvertIfASCII(const char* ansiStr, int strLen, WCHAR* wideBuf, int cnt, BOOL OEMCP)
+{
+   BOOL rval = FALSE;
+   wideBuf[0] = 0;
+   if (lstrlenA(ansiStr) == strLen)
+   {
+      MultiByteToWideChar(OEMCP ? CP_OEMCP : CP_ACP, 0, ansiStr, -1, wideBuf, cnt);
+      rval = TRUE;
+   }
+   else
+   {
+      // Going to assume that it's a wide char array.
+      lstrcpynW(wideBuf, (const WCHAR*) ansiStr, cnt);
+   }
+
+   return rval;
 }
 
 void ExecScript(int log) {
-  char szRet[128] = "";
-  char meDLLPath[MAX_PATH];    
-  char *executor;
-  char *g_exec;
-  char *pExec;
+  TCHAR szRet[128] = _T("");
+  TCHAR meDLLPath[MAX_PATH];    
+  TCHAR *executor;
+  TCHAR *g_exec;
+  TCHAR *pExec;
   unsigned int g_to;
   BOOL bOEM;
 
   if (!IsWOW64()) {
-    char *p;
+    TCHAR* p;
     int nComSpecSize;
 
     nComSpecSize = GetModuleFileName(g_hInst, meDLLPath, MAX_PATH) + 2; // 2 chars for quotes
-    g_exec = (char *)GlobalAlloc(GPTR, sizeof(char)*g_stringsize+nComSpecSize+2); // 1 for space, 1 for null
+    g_exec = (TCHAR *)GlobalAlloc(GPTR, sizeof(TCHAR)*(g_stringsize+nComSpecSize+2)); // 1 for space, 1 for null
     p = meDLLPath + nComSpecSize - 2; // point p at null char of meDLLPath
-    *g_exec = '"';
+    *g_exec = _T('"');
     executor = g_exec + 1;
 
+    // Look for the last '\' in path.
     do
     {
-      if (*p == '\\')
+      if (*p == _T('\\'))
         break;
       p = CharPrev(meDLLPath, p);
     }
@@ -128,15 +172,15 @@ void ExecScript(int log) {
     if (p == meDLLPath)
     {
       // bad path
-      pushstring("error");
+      pushstring(_T("error"));
       GlobalFree(g_exec);
       return;
     }
 
     *p = 0;
-    GetTempFileName(meDLLPath, "ns", 0, executor);
-    *p = '\\';
-    if (CopyFile(meDLLPath, executor, FALSE))
+    GetTempFileName(meDLLPath, _T("ns"), 0, executor);  // executor = new temp file name in module path.
+    *p = _T('\\');
+    if (CopyFile(meDLLPath, executor, FALSE))  // copy current DLL to temp file in module path.
     {
       HANDLE hFile, hMapping;
       LPBYTE pMapView;
@@ -147,25 +191,31 @@ void ExecScript(int log) {
       if (pMapView)
       {
         pNTHeaders = (PIMAGE_NT_HEADERS)(pMapView + ((PIMAGE_DOS_HEADER)pMapView)->e_lfanew);
+        // Turning the copied DLL into a stripped down executable.
         pNTHeaders->FileHeader.Characteristics = IMAGE_FILE_32BIT_MACHINE | IMAGE_FILE_LOCAL_SYMS_STRIPPED | 
           IMAGE_FILE_LINE_NUMS_STRIPPED | IMAGE_FILE_EXECUTABLE_IMAGE;
+        // Windows character-mode user interface (CUI) subsystem.
         pNTHeaders->OptionalHeader.Subsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
-        pNTHeaders->OptionalHeader.AddressOfEntryPoint = (DWORD)WinMain - (DWORD)g_hInst;  
+        // g_hInst is assumed to be the very base of the DLL in memory.
+        // WinMain will have the address of the WinMain function in memory.
+        // Getting the difference gets you the relative location of the
+        // WinMain function.
+        pNTHeaders->OptionalHeader.AddressOfEntryPoint = (DWORD) ((DWORD_PTR)AsExeWinMain - (DWORD_PTR)g_hInst);
         UnmapViewOfFile(pMapView);
       }
       CloseHandle(hMapping);
       CloseHandle(hFile);
     }
 
-    lstrcat(g_exec, "\"");
+    lstrcat(g_exec, _T("\""));
 
     // add space
     pExec = g_exec + lstrlen(g_exec);
-    *pExec = ' ';
+    *pExec = _T(' ');
     pExec++;
   } else {
     executor = NULL;
-    g_exec = (char *)GlobalAlloc(GPTR, sizeof(char)*g_stringsize+1); // 1 for null
+    g_exec = (TCHAR *)GlobalAlloc(GPTR, sizeof(TCHAR)*(g_stringsize+1)); // 1 for NULL
     pExec = g_exec;
   }
 
@@ -173,18 +223,24 @@ void ExecScript(int log) {
   bOEM = FALSE;  // default is no OEM->ANSI conversion
 
   g_hwndList = NULL;
-  if (g_hwndParent)
-    g_hwndList = FindWindowEx(FindWindowEx(g_hwndParent,NULL,"#32770",NULL),NULL,"SysListView32",NULL);
+  
+  // g_hwndParent = the caller, usually NSIS installer.
+  if (g_hwndParent) // The window class name for dialog boxes is "#32770"
+    g_hwndList = FindWindowEx(FindWindowEx(g_hwndParent,NULL,_T("#32770"),NULL),NULL,_T("SysListView32"),NULL);
+
+  // g_exec is the complete command to run: It has the copy of this DLL turned
+  // into an executable right now.
 
 params:
+  // Get the command I need to run from the NSIS stack.
   popstring(pExec);
-  if (my_strstr(pExec, "/TIMEOUT=") == pExec) {
-    char *szTimeout = pExec + 9;
+  if (my_strstr(pExec, _T("/TIMEOUT=")) == pExec) {
+    TCHAR *szTimeout = pExec + 9;
     g_to = my_atoi(szTimeout);
     *pExec = 0;
     goto params;
   }
-  if (!lstrcmpi(pExec, "/OEM")) {
+  if (!lstrcmpi(pExec, _T("/OEM"))) {
     bOEM = TRUE;
     *pExec = 0;
     goto params;
@@ -192,53 +248,58 @@ params:
 
   if (!pExec[0]) 
   {
-    pushstring("error");
-    *(pExec-2) = '\0'; // skip space and quote
+    pushstring(_T("error"));
+    if (pExec-2 >= g_exec)
+      *(pExec-2) = _T('\0'); // skip space and quote
     if (executor) DeleteFile(executor);
     GlobalFree(g_exec);
     return;
   }
+
+  // Got all the params off the stack.
   
   {
     STARTUPINFO si={sizeof(si),};
     SECURITY_ATTRIBUTES sa={sizeof(sa),};
     SECURITY_DESCRIPTOR sd={0,};
     PROCESS_INFORMATION pi={0,};
-    OSVERSIONINFO osv={sizeof(osv)};
+    const BOOL isNT = sizeof(void*) > 4 || (GetVersion() < 0x80000000);
     HANDLE newstdout=0,read_stdout=0;
     HANDLE newstdin=0,read_stdin=0;
     DWORD dwRead = 1;
     DWORD dwExit = 0;
     DWORD dwWait = WAIT_TIMEOUT;
     DWORD dwLastOutput;
-    static char szBuf[1024];
+    static TCHAR szBuf[1024];
+#ifdef _UNICODE
+    static char ansiBuf[1024];
+#endif
     HGLOBAL hUnusedBuf = NULL;
-    char *szUnusedBuf = 0;
+    TCHAR *szUnusedBuf = 0;
 
     if (log) {
-      hUnusedBuf = GlobalAlloc(GHND, log & 2 ? g_stringsize : sizeof(szBuf)*4);
+      hUnusedBuf = GlobalAlloc(GHND, log & 2 ? (g_stringsize*sizeof(TCHAR)) : sizeof(szBuf)*4); // Note: will not grow if (log & 2)
       if (!hUnusedBuf) {
-        lstrcpy(szRet, "error");
+        lstrcpy(szRet, _T("error"));
         goto done;
       }
-      szUnusedBuf = (char *)GlobalLock(hUnusedBuf);
+      szUnusedBuf = (TCHAR *)GlobalLock(hUnusedBuf);
     }
 
-    GetVersionEx(&osv);
-    if (osv.dwPlatformId == VER_PLATFORM_WIN32_NT) {
+    sa.bInheritHandle = true;
+    sa.lpSecurityDescriptor = NULL;
+    if (isNT) {
       InitializeSecurityDescriptor(&sd,SECURITY_DESCRIPTOR_REVISION);
       SetSecurityDescriptorDacl(&sd,true,NULL,false);
       sa.lpSecurityDescriptor = &sd;
     }
-    else 
-      sa.lpSecurityDescriptor = NULL;
-    sa.bInheritHandle = true;
+
     if (!CreatePipe(&read_stdout,&newstdout,&sa,0)) {
-      lstrcpy(szRet, "error");
+      lstrcpy(szRet, _T("error"));
       goto done;
     }
     if (!CreatePipe(&read_stdin,&newstdin,&sa,0)) {
-      lstrcpy(szRet, "error");
+      lstrcpy(szRet, _T("error"));
       goto done;
     }
 
@@ -249,64 +310,70 @@ params:
     si.hStdOutput = newstdout;
     si.hStdError = newstdout;
     if (!CreateProcess(NULL,g_exec,NULL,NULL,TRUE,CREATE_NEW_CONSOLE,NULL,NULL,&si,&pi)) {
-      lstrcpy(szRet, "error");
+      lstrcpy(szRet, _T("error"));
       goto done;
     }
 
     dwLastOutput = GetTickCount();
 
+    // Now I'm talking with an executable copy of myself.
     while (dwWait != WAIT_OBJECT_0 || dwRead) {
       PeekNamedPipe(read_stdout, 0, 0, 0, &dwRead, NULL);
       if (dwRead) {
         dwLastOutput = GetTickCount();
+#ifdef _UNICODE
+        ReadFile(read_stdout, ansiBuf, sizeof(ansiBuf)-1, &dwRead, NULL);
+        ansiBuf[dwRead] = 0;
+        WideConvertIfASCII(ansiBuf, dwRead, szBuf, sizeof(szBuf)/sizeof(szBuf[0]), bOEM);
+#else
         ReadFile(read_stdout, szBuf, sizeof(szBuf)-1, &dwRead, NULL);
-        szBuf[dwRead] = 0;
+        szBuf[dwRead] = '\0';
+#endif
         if (log) {
-          char *p, *p2;
-          SIZE_T iReqLen = lstrlen(szBuf) + lstrlen(szUnusedBuf);
-          if (GlobalSize(hUnusedBuf) < iReqLen && (iReqLen < g_stringsize || !(log & 2))) {
-            GlobalUnlock(hUnusedBuf);
-            hUnusedBuf = GlobalReAlloc(hUnusedBuf, iReqLen+sizeof(szBuf), GHND);
-            if (!hUnusedBuf) {
-              lstrcpy(szRet, "error");
-              break;
-            }
-            szUnusedBuf = (char *)GlobalLock(hUnusedBuf);
+          if (log & 2) {
+            lstrcpyn(szUnusedBuf + lstrlen(szUnusedBuf), szBuf, g_stringsize - lstrlen(szUnusedBuf));
           }
-          p = szUnusedBuf; // get the old left overs
-          if (iReqLen < g_stringsize || !(log & 2)) lstrcat(p, szBuf);
           else {
-            lstrcpyn(p + lstrlen(p), szBuf, g_stringsize - lstrlen(p));
-          }
-
-          if (!(log & 2)) {
-            while ((p = my_strstr(p, "\t"))) {
-              if ((int)(p - szUnusedBuf) > (int)(GlobalSize(hUnusedBuf) - TAB_REPLACE_SIZE - 1))
+            TCHAR *p, *p2;
+            SIZE_T iReqLen = lstrlen(szBuf) + lstrlen(szUnusedBuf) + 1;
+            if (GlobalSize(hUnusedBuf) < iReqLen*sizeof(TCHAR)) {
+              GlobalUnlock(hUnusedBuf);
+              hUnusedBuf = GlobalReAlloc(hUnusedBuf, iReqLen*sizeof(TCHAR)+sizeof(szBuf), GHND);
+              if (!hUnusedBuf) {
+                lstrcpy(szRet, _T("error"));
+                break;
+              }
+              szUnusedBuf = (TCHAR *)GlobalLock(hUnusedBuf);
+            }
+            p = szUnusedBuf; // get the old left overs
+            lstrcat(p, szBuf);
+            while ((p = my_strstr(p, _T("\t")))) {
+              if ((int)(p - szUnusedBuf) > (int)(GlobalSize(hUnusedBuf)/sizeof(TCHAR) - TAB_REPLACE_SIZE - 1))
               {
-                *p++ = ' ';
+                *p++ = _T(' ');
               }
               else
               {
                 int len = lstrlen(p);
-                char *c_out=(char*)p+TAB_REPLACE_SIZE+len;
-                char *c_in=(char *)p+len;
+                TCHAR *c_out=(TCHAR*)p+TAB_REPLACE_SIZE+len;
+                TCHAR *c_in=(TCHAR *)p+len;
                 while (len-- > 0) {
                   *c_out--=*c_in--;
                 }
 
                 lstrcpy(p, TAB_REPLACE);
                 p += TAB_REPLACE_SIZE;
-                *p = ' ';
+                *p = _T(' ');
               }
             }
             
             p = szUnusedBuf; // get the old left overs
             for (p2 = p; *p2;) {
-              if (*p2 == '\r') {
+              if (*p2 == _T('\r')) {
                 *p2++ = 0;
                 continue;
               }
-              if (*p2 == '\n') {
+              if (*p2 == _T('\n')) {
                 *p2 = 0;
                 while (!*p && p != p2) p++;
                 LogMessage(p, bOEM);
@@ -318,7 +385,7 @@ params:
             
             // If data was taken out from the unused buffer, move p contents to the start of szUnusedBuf
             if (p != szUnusedBuf) {
-              char *p2 = szUnusedBuf;
+              TCHAR *p2 = szUnusedBuf;
               while (*p) *p2++ = *p++;
               *p2 = 0;
             }
@@ -328,7 +395,7 @@ params:
       else {
         if (g_to && GetTickCount() > dwLastOutput+g_to) {
           TerminateProcess(pi.hProcess, -1);
-          lstrcpy(szRet, "timeout");
+          lstrcpy(szRet, _T("timeout"));
         }
         else Sleep(LOOPTIMEOUT);
       }
@@ -341,8 +408,8 @@ done:
     if (log & 2) pushstring(szUnusedBuf);
     if (log & 1 && *szUnusedBuf) LogMessage(szUnusedBuf, bOEM);
     if ( dwExit == STATUS_ILLEGAL_INSTRUCTION )
-      lstrcpy(szRet, "error");
-    if (!szRet[0]) wsprintf(szRet,"%d",dwExit);
+      lstrcpy(szRet, _T("error"));
+    if (!szRet[0]) wsprintf(szRet,_T("%d"),dwExit);
     pushstring(szRet);
     CloseHandle(pi.hThread);
     CloseHandle(pi.hProcess);
@@ -350,7 +417,8 @@ done:
     CloseHandle(read_stdout);
     CloseHandle(newstdin);
     CloseHandle(read_stdin);
-    *(pExec-2) = '\0'; // skip space and quote
+    if (pExec-2 >= g_exec)
+      *(pExec-2) = _T('\0'); // skip space and quote
     if (executor) DeleteFile(executor);
     GlobalFree(g_exec);
     if (log) {
@@ -361,27 +429,29 @@ done:
 }
 
 // Tim Kosse's LogMessage
-void LogMessage(const char *pStr, BOOL bOEM) {
+void LogMessage(const TCHAR *pStr, BOOL bOEM) {
   LVITEM item={0};
   int nItemCount;
   if (!g_hwndList) return;
   //if (!lstrlen(pStr)) return;
-  if (bOEM == TRUE) OemToCharBuff(pStr, (char *)pStr, lstrlen(pStr));
-  nItemCount=SendMessage(g_hwndList, LVM_GETITEMCOUNT, 0, 0);
+#ifndef _UNICODE
+  if (bOEM == TRUE) OemToCharBuff(pStr, (char*)pStr, lstrlen(pStr));
+#endif
+  nItemCount=(int) SendMessage(g_hwndList, LVM_GETITEMCOUNT, 0, 0);
   item.mask=LVIF_TEXT;
-  item.pszText=(char *)pStr;
+  item.pszText=(TCHAR *)pStr;
   item.cchTextMax=0;
   item.iItem=nItemCount;
   ListView_InsertItem(g_hwndList, &item);
   ListView_EnsureVisible(g_hwndList, item.iItem, 0);
 }
 
-char *my_strstr(char *a, char *b)
+TCHAR *my_strstr(TCHAR *a, TCHAR *b)
 {
   int l = lstrlen(b);
   while (lstrlen(a) >= l)
   {
-    char c = a[l];
+    TCHAR c = a[l];
     a[l] = 0;
     if (!lstrcmpi(a, b))
     {
@@ -394,25 +464,25 @@ char *my_strstr(char *a, char *b)
   return NULL;
 }
 
-unsigned int my_atoi(char *s) {
+unsigned int my_atoi(TCHAR *s) {
   unsigned int v=0;
-  if (*s == '0' && (s[1] == 'x' || s[1] == 'X')) {
+  if (*s == _T('0') && (s[1] == _T('x') || s[1] == _T('X'))) {
     s+=2;
     for (;;) {
       int c=*s++;
-      if (c >= '0' && c <= '9') c-='0';
-      else if (c >= 'a' && c <= 'f') c-='a'-10;
-      else if (c >= 'A' && c <= 'F') c-='A'-10;
+      if (c >= _T('0') && c <= _T('9')) c-=_T('0');
+      else if (c >= _T('a') && c <= _T('f')) c-=_T('a')-10;
+      else if (c >= _T('A') && c <= _T('F')) c-=_T('A')-10;
       else break;
       v<<=4;
       v+=c;
     }
   }
-  else if (*s == '0' && s[1] <= '7' && s[1] >= '0') {
+  else if (*s == _T('0') && s[1] <= _T('7') && s[1] >= _T('0')) {
     s++;
     for (;;) {
       int c=*s++;
-      if (c >= '0' && c <= '7') c-='0';
+      if (c >= _T('0') && c <= _T('7')) c-=_T('0');
       else break;
       v<<=3;
       v+=c;
@@ -420,7 +490,7 @@ unsigned int my_atoi(char *s) {
   }
   else {
     for (;;) {
-      int c=*s++ - '0';
+      int c=*s++ - _T('0');
       if (c < 0 || c > 9) break;
       v*=10;
       v+=c;
@@ -429,14 +499,14 @@ unsigned int my_atoi(char *s) {
   return (int)v;
 }
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+int WINAPI AsExeWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow)
 {
   DWORD               Ret;
   STARTUPINFO         si   = {0};
   PROCESS_INFORMATION pi   = {0};
-  char command_line[1024];
-  char seekchar=' ';
-  char *cmdline;
+  TCHAR command_line[1024]; //BUGBUG
+  TCHAR seekchar=_T(' ');
+  TCHAR *cmdline;
   
   si.cb = sizeof(si);
   // Make child process use this app's standard files. Not needed because the handles
@@ -448,12 +518,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
   lstrcpyn(command_line, GetCommandLine(), 1024);
   
   cmdline = command_line;
-  if (*cmdline == '\"') seekchar = *cmdline++;
+  if (*cmdline == _T('\"')) seekchar = *cmdline++;
 
   while (*cmdline && *cmdline != seekchar) cmdline=CharNext(cmdline);
   cmdline=CharNext(cmdline);
   // skip any spaces before the arguments
-  while (*cmdline && *cmdline == ' ') cmdline++;
+  while (*cmdline && *cmdline == _T(' ')) cmdline++;
 
   Ret = CreateProcess (NULL, cmdline,
     NULL, NULL,

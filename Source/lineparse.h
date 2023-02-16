@@ -3,7 +3,7 @@
  * 
  * This file is a part of NSIS.
  * 
- * Copyright (C) 1999-2009 Nullsoft and Contributors
+ * Copyright (C) 1999-2019 Nullsoft and Contributors
  * 
  * Licensed under the zlib/libpng license (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,10 +12,14 @@
  * 
  * This software is provided 'as-is', without any express or implied
  * warranty.
+ *
+ * Unicode support by Jim Park -- 08/09/2007
  */
 
 #ifndef _LINEPARSE_H_
 #define _LINEPARSE_H_
+
+#include "tchar.h"
 
 class LineParser {
   public:
@@ -25,23 +29,29 @@ class LineParser {
 
     bool inComment();
     bool inCommentBlock();
-    int parse(char *line, int ignore_escaping=0); // returns -1 on error
+    int parse(TCHAR *line, int ignore_escaping=0); // returns -1 on error
     int getnumtokens();
     void eattoken();
-    double gettoken_float(int token, int *success=0);
-    int gettoken_int(int token, int *success=0);
-    char *gettoken_str(int token);
-    int gettoken_enum(int token, const char *strlist); // null seperated list
+    int gettoken_int(int token, int *success=0) const;
+    double gettoken_float(int token, int *success=0) const;
+    double gettoken_number(int token, int *success=0) const;
+    int gettoken_binstrdata(int token, char*buffer, int bufcap) const;
+    TCHAR *gettoken_str(int token) const;
+    int gettoken_enum(int token, const TCHAR *strlist); // null separated list
+
+    static int parse_int(const TCHAR *str, int *success=0);
+    static double parse_float(const TCHAR *str, int *success=0);
+    static double parse_number(const TCHAR *str, int *success=0);
 
   private:
 
     void freetokens();
-    int doline(char *line, int ignore_escaping=0);
+    int doline(TCHAR *line, int ignore_escaping=0);
 
     int m_eat;
     int m_nt;
     bool m_incommentblock;
     bool m_incomment;
-    char **m_tokens;
+    TCHAR **m_tokens;
 };
 #endif//_LINEPARSE_H_

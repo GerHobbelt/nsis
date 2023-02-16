@@ -4,27 +4,27 @@
 
 \c language_file.nlf
 
-Loads a language file for the construction of a language table. All of the language files that come with NSIS are in \L{../Contrib/Language files}{Contrib\\Language Files}
+Loads a language file for the construction of a language table. All of the language files that ship with NSIS are in \L{../Contrib/Language files}{Contrib\\Language Files}
 
-After you have inserted the language file $\{LANG_langfile\} will be defined as the language id (for example, $\{LANG_ENGLISH\} will be defined as 1033). Use it with \R{langstring}{LangString}, \R{licenselangstring}{LicenseLangString}, LangDLL and \R{viaddversionkey}{VIAddVersionKey}.
+After you have inserted the language file $\{LANG_langfile\} will be defined as the language id (for example, $\{LANG_ENGLISH\} will be defined as 1033). Use it with \R{langstring}{LangString}, \R{licenselangstring}{LicenseLangString}, \R{langdll}{LangDLL} and \R{viaddversionkey}{VIAddVersionKey}.
 
 \S2{langstring} LangString
 
-\c name language_id string
+\c name language_id|0 string
 
 Defines a multilingual string. This means its value may be different (or not, it's up to you) for every language. It allows you to easily make your installer multilingual without the need to add massive switches to the script.
 
-Each language string has a name that identifies it and a value for each language used by the installer. They can be used in any runtime string in the script. To use a language string all you need to add to the string is $(LangString_name_here) where you want the LangString to be inserted.
+Each language string has a name that identifies it and a value for each language used by the installer. They can be used in any runtime string in the script. To use a language string all you need to add to the string is $(LangString_name_here) where you want the \R{langstring}{LangString} to be inserted.
 
 \\<b\\>Notes:\\</b\\>
 
 \b Unlike defines that use curly braces - \{\}, language strings use parenthesis - ().
 
-\b If you change the language in the .onInit function, note that language strings in .onInit will still use the detected language based on the user's default Windows language, because the language is initialized after .onInit.
+\b If you change the language in the .onInit function, note that language strings in .onInit will still use the detected language based on the user's default Windows language because the language is initialized after .onInit.
 
 \b Always set language strings for every language in your script.
 
-\b If you set the language ID to 0 the last used language by LangString or \R{loadlanguagefile}{LoadLanguageFile} will be used.
+\b If you set the language ID to 0 the last used language by \R{langstring}{LangString} or \R{loadlanguagefile}{LoadLanguageFile} will be used.
 
 \\<b\\>Example of usage:\\</b\\>
 
@@ -36,21 +36,21 @@ Each language string has a name that identifies it and a value for each language
 
 \S2{licenselangstring} LicenseLangString
 
-\c name language_id license_path
+\c name language_id|0 license_path
 
-Does the same as \R{langstring}{LangString} only it loads the string from a text/RTF file and defines a special LangString that can be used only by \R{alicensedata}{LicenseData}.
+Does the same as \R{langstring}{LangString} only it loads the string from a text/RTF file and defines a special LangString that can only be used by \R{alicensedata}{LicenseData}.
 
 \c LicenseLangString license ${LANG_ENGLISH} license-english.txt
 \c LicenseLangString license ${LANG_FRENCH} license-french.txt
 \c LicenseLangString license ${LANG_GERMAN} license-german.txt
-
+\c
 \c LicenseData $(license)
 
 \S0{langs} Multiple Languages
 
 As of version 2 NSIS fully supports multiple languages. The interface of one installer can support multiple languages.
 
-Use \R{loadlanguagefile}{LoadLanguageFile} for every language to load the default interface texts and language properties.
+Use \R{loadlanguagefile}{LoadLanguageFile} for every language to load the default interface texts and language properties. Visit the \W{http://forums.winamp.com/showthread.php?t=157119}{NSIS translations forum} for more information about creating new language files.
 
 The default interface texts can easily be changed using instructions like \R{acomponenttext}{ComponentText} etc. 
 

@@ -4,10 +4,12 @@
 ** Author: Justin Frankel
 ** File: util.cpp - JNL implementation of basic network utilities
 ** License: see License.txt
+**
+** Unicode support by Jim Park -- 08/24/2007
+**   Keep everything here strictly ANSI.  No TCHAR style stuff.
 */
 
-#include "netinc.h"
-
+#include <windows.h>
 #include "util.h"
 
 int my_atoi(char *s)
@@ -26,7 +28,7 @@ int my_atoi(char *s)
   return (int)v;
 }
 
-__int64 myatoi64(char *s)
+__int64 myatoi64(const char *s)
 {
   __int64 v=0;
   int sign=0;
@@ -72,10 +74,31 @@ void myitoa64(__int64 i, char *buffer)
     *buffer = 0;
 }
 
+// Visual Studio 2015 (CLv19 x86) and some older versions of CLv14 x64 will optimize
+// our loop into a direct call to _memset and this fails to link because we don't use the CRT
+#if defined(_MSC_VER) && _MSC_VER+0 >= 1400
+#  if defined(_MSC_FULL_VER) && _MSC_FULL_VER+0 >= 140050727
+#    include <intrin.h>
+#  else
+     EXTERN_C void __stosb(BYTE*,BYTE,size_t);
+#  endif //~ _MSC_FULL_VER >= 140050727
+#  if defined(_M_IX86) || defined(_M_AMD64) || defined(_M_X64) // __stosb not available under _M_ARM nor _M_ARM64
+#    pragma intrinsic(__stosb)
+#    define CRTINTRINSIC_memset(p,c,s) __stosb((BYTE*)(p),(BYTE)(c),(s))
+#  elif defined(_M_ARM) || defined(_M_ARM64) // For _MSC_VER=1914 (VS 15.7.27703.2026/CL 19.14.26430)
+     EXTERN_C void* __cdecl memset(void *d, int v, size_t l) { char *p=(char*)d; while (l-- > 0) *p++=v; return d; }
+#    pragma function(memset)
+#  endif
+#endif //~ _MSC_VER
+
 void mini_memset(void *o,char i,int l)
 {
+#ifdef CRTINTRINSIC_memset
+  CRTINTRINSIC_memset(o, i, l);
+#else
   char *oo=(char*)o;
   while (l-- > 0) *oo++=i;
+#endif
 }
 void mini_memcpy(void *o,void*i,int l)
 {

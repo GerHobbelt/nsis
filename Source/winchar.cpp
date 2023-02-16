@@ -3,7 +3,7 @@
  * 
  * This file is a part of NSIS.
  * 
- * Copyright (C) 1999-2009 Nullsoft and Contributors
+ * Copyright (C) 1999-2019 Nullsoft and Contributors
  * 
  * Licensed under the zlib/libpng license (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,110 +17,115 @@
 #include "Platform.h"
 #include "winchar.h"
 #include "util.h"
+#include "utf.h"
 
 #include <stdexcept>
+#include <cassert>
 
 using std::runtime_error;
 
-WCHAR *winchar_fromansi(const char* s, unsigned int codepage/*=CP_ACP*/)
-{
-  int l = MultiByteToWideChar(codepage, 0, s, -1, 0, 0);
-  if (l == 0)
-    throw runtime_error("Unicode conversion failed");
-
-  WCHAR *ws = new WCHAR[l + 1];
-
-  if (MultiByteToWideChar(codepage, 0, s, -1, ws, l + 1) == 0)
-    throw runtime_error("Unicode conversion failed");
-
-  return ws;
-}
-
-char *winchar_toansi(const WCHAR* ws, unsigned int codepage/*=CP_ACP*/)
-{
-  int l = WideCharToMultiByte(codepage, 0, ws, -1, 0, 0, 0, 0);
-  if (l == 0)
-    throw runtime_error("Unicode conversion failed");
-
-  char *s = new char[l + 1];
-
-  if (WideCharToMultiByte(codepage, 0, ws, -1, s, l + 1, 0, 0) == 0)
-    throw runtime_error("Unicode conversion failed");
-
-  return s;
-}
-
-WCHAR *winchar_strcpy(WCHAR *ws1, const WCHAR *ws2)
-{
-  WCHAR *ret = ws1;
-
-  while (*ws2)
-  {
-    *ws1++ = *ws2++;
-  }
-
-  *ws1 = 0;
-
-  return ret;
-}
-
-WCHAR *winchar_strncpy(WCHAR *ws1, const WCHAR *ws2, size_t n)
-{
-  WCHAR *ret = ws1;
-
-  while (n && *ws2)
-  {
-    *ws1++ = *ws2++;
-    n--;
-  }
-
-  while (n--)
-  {
-    *ws1++ = 0;
-  }
-
-  return ret;
-}
-
-size_t winchar_strlen(const WCHAR *ws)
-{
-  size_t len = 0;
-
-  while (*ws++)
-  {
-    len++;
-  }
-
-  return len;
-}
-
-WCHAR *winchar_strdup(const WCHAR *ws)
-{
-  WCHAR *dup = new WCHAR[winchar_strlen(ws) + 1];
-  winchar_strcpy(dup, ws);
-  return dup;
-}
-
-int winchar_strcmp(const WCHAR *ws1, const WCHAR *ws2)
+int WinWStrICmpASCII(const WINWCHAR *a, const char *b)
 {
   int diff = 0;
-
   do
+    diff = static_cast<int>(S7ChLwr(*a)) - static_cast<int>(S7ChLwr(*b++));
+  while (*a++ && !diff);
+  return diff;
+}
+int WinWStrNICmpASCII(const WINWCHAR *a, const char *b, size_t n)
+{
+  int diff = 0;
+  for ( ; n--; ++a, ++b )
   {
-    diff = static_cast<int>(*ws1) - static_cast<int>(*ws2);
+    diff = static_cast<int>(S7ChLwr(*a)) - static_cast<int>(S7ChLwr(*b));
+    if (diff || !*a) break;
   }
-  while (*ws1++ && *ws2++ && !diff);
-
   return diff;
 }
 
-int winchar_stoi(const WCHAR *ws)
+WINWCHAR* WinWStrDupFromChar(const char *s, unsigned int cp)
 {
-  char *s = winchar_toansi(ws);
+  int cch = MultiByteToWideChar(cp, 0, s, -1, 0, 0);
+  wchar_t *p = (wchar_t*) malloc(cch * sizeof(wchar_t));
+  if (p)
+  {
+    MultiByteToWideChar(cp, 0, s, -1, p, cch);
+#ifndef _WIN32
+    wchar_t *p2 = (wchar_t*) WinWStrDupFromWC(p);
+    free(p), p = p2;
+#endif
+  }
+  return (WINWCHAR*) p;
+}
 
-  int ret = atoi(s);
+#ifndef _WIN32
+size_t WinWStrLen(const WINWCHAR *s)
+{
+#ifdef MAKENSIS // Only makensis implements all the functions in utf.cpp
+  return StrLenUTF16(s);
+#else
+  return sizeof(wchar_t) == 2 ? wcslen((wchar_t*)s) : InlineStrLenUTF16(s);
+#endif
+}
 
-  delete [] s;
-
+WINWCHAR* WinWStrCpy(WINWCHAR *d, const WINWCHAR *s)
+{
+  WINWCHAR *ret = d;
+  while (*s) *d++ = *s++;
+  *d = 0;
   return ret;
 }
+
+WINWCHAR* WinWStrNCpy(WINWCHAR *d, const WINWCHAR *s, size_t n)
+{
+  WINWCHAR *ret = d;
+  while (n && *s) *d++ = *s++, n--;
+  while (n--) *d++ = 0;
+  return ret;
+}
+
+int WinWStrCmp(const WINWCHAR *a, const WINWCHAR *b)
+{
+  int diff = 0;
+  do
+    diff = static_cast<int>(*a) - static_cast<int>(*b++);
+  while (*a++ && !diff);
+  return diff;
+}
+
+WINWCHAR* WinWStrDupFromWinWStr(const WINWCHAR *s)
+{
+  WINWCHAR *d = (WINWCHAR*) malloc((WinWStrLen(s) + 1) * sizeof(WINWCHAR));
+  if (d) WinWStrCpy(d, s);
+  assert(!d || !IS_INTRESOURCE(d)); // DialogTemplate strings can be ATOMs
+  return d;
+}
+
+WINWCHAR* WinWStrDupFromWC(const wchar_t *s)
+{
+#ifdef MAKENSIS
+  WCToUTF16LEHlpr cnv;
+  if (!cnv.Create(s)) throw runtime_error("Unicode conversion failed");
+  return (WINWCHAR*) cnv.Detach();
+#else
+  // NOTE: Anything outside the ASCII range will not convert correctly!
+  size_t cch = wcslen(s);
+  WINWCHAR* p = (WINWCHAR*) malloc(++cch * 2);
+  if (p) for (size_t i = 0; i < cch; ++i) p[i] = FIX_ENDIAN_INT16(s[i]);
+  return p;
+#endif
+}
+
+int WinWStrToInt(const WINWCHAR *s)
+{
+  unsigned int v = 0, base = 10, top = '9';
+  int sign = 1;
+  if (*s == _T('-')) ++s, sign = -1;
+  for ( unsigned int c;; )
+  {
+    if ((c = *s++) >= '0' && c <= top) c -= '0'; else break;
+    v *= base, v += c;
+  }
+  return ((int)v) * sign;
+} 
+#endif // ~!_WIN32

@@ -66,6 +66,14 @@
 
 \b InstallOptions improvements
 
+\e{Jim Park}
+
+\b Unicode support
+
+\e{Olivier Marcoux aka Wizou}
+
+\b Unicode merge
+
 \e{nnop@newmail.ru}
 
 \e{Ryan Geiss}
@@ -98,6 +106,20 @@
 
 \e{Anders Kjersem}
 
+\b NSIS 3 patron saint
+
+\b 64-bit support
+
+\b Unicode merge & support
+
+\b NSIS 3 POSIX support
+
+\H{testers} Testers
+
+\e{Jason Ross aka JasonFriday13}
+
+\b NSIS 3 POSIX support
+
 \H{designers} Designers
 
 \e{Nikos Adamamas}
@@ -116,19 +138,27 @@ Afrikaans - \e{Friedel Wolff}
 
 Arabic - \e{asdfuae, Rami Kattan}
 
+Armenian - \e{Hrant Ohanyan}
+
 Asturian - \e{Marcos (marcoscostales@gmail.com)}
 
-Basque - \e{I\u00F1aki San Vicente}
+Basque - \e{I\u00F1{n}aki San Vicente}
 
 Belarusian - \e{Sitnikov Vjacheslav}
 
 Bosnian - \e{Salih CAVKIC}
 
-Breton - \e{Korvigello\uF9 An Drouizig}
+Breton - \e{Korvigello\uF9{u} An Drouizig}
 
 Bulgarian - \e{Asparouh Kalyandjiev, Plamen Penkov}
 
 Catalan - \e{falanko}
+
+Chinese (Simplified) - \e{Kii Ali}
+
+Chinese (Traditional) - \e{Kii Ali, Walter Cheuk}
+
+Corsican - \e{Patriccollu di Santa Maria \uE8{e} Sich\uE8{e}}
 
 Croatian - \e{Igor Ostriz, Vedran "RIV@NVX" Miletic}
 
@@ -150,21 +180,27 @@ French - \e{veekee, Sebastien Delahaye, Jerome Charaoui}
 
 Galician - \e{Ramon Flores}
 
+Georgian - \e{David Huriev}
+
 German - \e{L.King, K. Windszus, R. Bisswanger, M. Simmack, Tim Kosse}
 
 Greek - \e{Makidis N. Michael}
 
 Hebrew - \e{Amir Szekely (aka KiCHiK), Yaron Shahrabani}
 
+Hind\u012b{i} - \e{Ryan Pretorius}
+
 Hungarian - \e{Soft-Trans Bt., Jozsef Tamas Herczeg, Lajos Molnar (Orfanik)}
 
 Icelandic - \e{Gretar Orri Kristinsson}
 
-Indonesian - \e{ariel825010106}
+Indonesian - \e{\#{Ariel Silooy}ariel825010106}
 
 Italian - \e{Orfanik, sanface, Alessandro Staltari, Lorenzo Bevilacqua}
 
 Japanese - \e{Dnanako, Takahiro Yoshimura}
+
+Khmer - \e{yi sophally}
 
 Korean - \e{dTomoyo, linak, koder}
 
@@ -182,9 +218,11 @@ Mongolian - \e{Bayarsaikhan Enkhtaivan}
 
 Norwegian - \e{Jonas Christoffer Lindstrom, Jan Ivar Beddari}
 
-Norwegian Nynorsk - \e{Vebj\u00F8rn Sture}
+Norwegian Nynorsk - \e{Vebj\u00F8{o}rn Sture}
 
-Polish - \e{Piotr Murawski, Rafa³ Lampe, cube, SYSTEMsoft Group}
+Pashto - \e{Pakhtosoft}
+
+Polish - \e{Piotr Murawski, Rafa\u0142{l} Lampe, cube, SYSTEMsoft Group, Marek St\u0119{e}pie\u0144{n}, Mateusz Gola, Pawe\u0142{l} Porwisz}
 
 Portuguese - \e{DragonSoull, Dre', Ramon}
 
@@ -198,17 +236,17 @@ Serbian - \e{Srdjan Obucina}
 
 Serbian Latin - \e{Srdjan Obucina, Vladan Obradovic}
 
-Slovak - \e{trace, Kypec, Mari\u00e1n Hikan\u00edk}
+Slovak - \e{trace, Kypec, Mari\u00e1{a}n Hikan\u00ed{i}k}
 
 Slovenian - \e{Janez Dolinar, Martin Sebotnjak}
 
-Spanish - \e{MoNKi, Lobo Lunar, Darwin Rodrigo Toledo C\u00e1ceres}
+Spanish - \e{MoNKi, Lobo Lunar, Darwin Rodrigo Toledo C\u00e1{a}ceres}
 
 Swedish - \e{Peter Gustafsson, Magnus Bonnevier, Rickard Angbratt}
 
-Thai - \e{SoKoOLz, TuW@nNu (asdfuae)}
+Tatar - \e{Bulat Azat uly}
 
-Traditional & Simplified Chinese - \e{Kii Ali}
+Thai - \e{SoKoOLz, TuW@nNu (asdfuae)}
 
 Turkish - \e{Bertan Kodamanoglu, Cagatay Dilsiz, Fatih BOY}
 
@@ -216,7 +254,9 @@ Ukrainian - \e{Yuri Holubow, Nash-Soft}
 
 Uzbek - \e{Emil Garipov (emil.garipov@gmail.com)}
 
-Valencian - \e{Bernardo Arlandis Ma\uF1\uF3}
+Valencian - \e{Bernardo Arlandis Ma\uF1{n}\uF3{o}}
+
+Vietnamese - \e{Clytie Siddall}
 
 Welsh - \e{Rhoslyn Prys, Meddal.com}
 

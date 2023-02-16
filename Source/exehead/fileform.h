@@ -3,7 +3,7 @@
  * 
  * This file is a part of NSIS.
  * 
- * Copyright (C) 1999-2009 Nullsoft and Contributors
+ * Copyright (C) 1999-2019 Nullsoft and Contributors
  * 
  * Licensed under the zlib/libpng license (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,8 @@
  * 
  * This software is provided 'as-is', without any express or implied
  * warranty.
+ *
+ * Unicode support by Jim Park -- 08/13/2007
  */
 
 #include "config.h"
@@ -26,10 +28,11 @@
 // firstheader (struct firstheader)
 // * headers (compressed together):
 //   header (struct header - contains pointers to all blocks)
+//   * nsis blocks (described in header->blocks)
 //     pages (struct page)
 //     section headers (struct section)
 //     entries/instructions (struct entry)
-//     strings (null seperated)
+//     strings (null separated)
 //     language tables (language id, dialog offset, language strings)
 //     colors (struct color)
 // data block (compressed files and uninstaller data)
@@ -47,7 +50,7 @@
 enum
 {
   EW_INVALID_OPCODE,    // zero is invalid. useful for catching errors. (otherwise an all zeroes instruction
-                        // does nothing, which is easily ignored but means something is wrong.
+                        // does nothing, which is easily ignored but means something is wrong)
   EW_RET,               // return from function call
   EW_NOP,               // Nop/Jump, do nothing: 1, [?new address+1:advance one]
   EW_ABORT,             // Abort: 1 [status]
@@ -58,7 +61,7 @@ enum
   EW_BRINGTOFRONT,      // BringToFront: 0
   EW_CHDETAILSVIEW,     // SetDetailsView: 2 [listaction,buttonaction]
   EW_SETFILEATTRIBUTES, // SetFileAttributes: 2 [filename, attributes]
-  EW_CREATEDIR,         // Create directory: 2, [path, ?update$INSTDIR]
+  EW_CREATEDIR,         // Create directory: 2, [path, ?update$INSTDIR, ?restrictAcl]
   EW_IFFILEEXISTS,      // IfFileExists: 3, [file name, jump amount if exists, jump amount if not exists]
   EW_SETFLAG,           // Sets a flag: 2 [id, data]
   EW_IFFLAG,            // If a flag: 4 [on, off, id, new value mask]
@@ -93,9 +96,9 @@ enum
   EW_READENVSTR,        // ReadEnvStr/ExpandEnvStrings: 3 [output, string_with_env_variables, IsRead]
 #endif
 #ifdef NSIS_SUPPORT_INTOPTS
-  EW_INTCMP,            // IntCmp: 6 [val1, val2, equal, val1<val2, val1>val2, unsigned?]
-  EW_INTOP,             // IntOp: 4 [output, input1, input2, op] where op: 0=add, 1=sub, 2=mul, 3=div, 4=bor, 5=band, 6=bxor, 7=bnot input1, 8=lnot input1, 9=lor, 10=land], 11=1%2
-  EW_INTFMT,            // IntFmt: [output, format, input]
+  EW_INTCMP,            // IntCmp: 6 [val1, val2, equal, val1<val2, val1>val2, flags] where flags: bit 0x01 is set for unsigned operations and bit 0x8000 is set for 64-bit operations
+  EW_INTOP,             // IntOp: 4 [output, input1, input2, op] where op: 0=add, 1=sub, 2=mul, 3=div, 4=bor, 5=band, 6=bxor, 7=bnot input1, 8=lor, 9=land 10=mod, 11=shl, 12=sar, 13=shr (bneg is implemented with bxor in compiler)
+  EW_INTFMT,            // IntFmt: 4 [output, format, input, 64-bit]
 #endif
 #ifdef NSIS_SUPPORT_STACK
   EW_PUSHPOP,           // Push/Pop/Exchange: 3 [variable/string, ?pop:push, ?exch]
@@ -109,13 +112,13 @@ enum
 #ifdef NSIS_CONFIG_ENHANCEDUI_SUPPORT
   EW_GETDLGITEM,        // GetDlgItem:        3: [outputvar, dialog, item_id]
   EW_SETCTLCOLORS,      // SerCtlColors:      3: [hwnd, pointer to struct colors]
-  EW_SETBRANDINGIMAGE,  // SetBrandingImage:  1: [Bitmap file]
+  EW_LOADANDSETIMAGE,   // SetBrandingImage/LoadAndSetImage: 3: [imgid ctl flags]
   EW_CREATEFONT,        // CreateFont:        5: [handle output, face name, height, weight, flags]
   EW_SHOWWINDOW,        // ShowWindow:        2: [hwnd, show state]
 #endif
 
 #ifdef NSIS_SUPPORT_SHELLEXECUTE
-  EW_SHELLEXEC,         // ShellExecute program: 4, [shell action, complete commandline, parameters, showwindow]
+  EW_SHELLEXEC,         // ShellExecute program: 5, [SEE_MASK_FLAG_*, verb, file, parameters, showwindow] (Will wait if SEE_MASK_NOCLOSEPROCESS is set)
 #endif
 
 #ifdef NSIS_SUPPORT_EXECUTE
@@ -135,7 +138,7 @@ enum
 #endif
 
 #ifdef NSIS_SUPPORT_CREATESHORTCUT
-  EW_CREATESHORTCUT,    // Make Shortcut: 5, [link file, target file, parameters, icon file, iconindex|show mode<<8|hotkey<<16]
+  EW_CREATESHORTCUT,    // Make Shortcut: 5, [link file, target file, parameters, icon file, packed CS_*]
 #endif
 
 #ifdef NSIS_SUPPORT_COPYFILES
@@ -152,7 +155,7 @@ enum
 #endif
 
 #ifdef NSIS_SUPPORT_REGISTRYFUNCTIONS
-  EW_DELREG,            // DeleteRegValue/DeleteRegKey: 4, [root key(int), KeyName, ValueName, delkeyonlyifempty]. ValueName is -1 if delete key
+  EW_DELREG,            // DeleteRegValue/DeleteRegKey: 4, [root key(int), KeyName, ValueName, ActionAndFlags(DELREG*)]
   EW_WRITEREG,          // Write Registry value: 5, [RootKey(int),KeyName,ItemName,ItemData,typelen]
                         //  typelen=1 for str, 2 for dword, 3 for binary, 0 for expanded str
   EW_READREGSTR,        // ReadRegStr: 5 [output, rootkey(int), keyname, itemname, ==1?int::str]
@@ -197,7 +200,16 @@ enum
 #ifdef NSIS_LOCKWINDOW_SUPPORT
   EW_LOCKWINDOW,
 #endif
+
+#ifdef _UNICODE     // opcodes available only in Unicode installers must be at the end of the enumeration
+#ifdef NSIS_SUPPORT_FILEFUNCTIONS
+  EW_FPUTWS,            // FileWriteUTF16LE: 4 [handle, string, ?int:string, TryWriteBOM]
+  EW_FGETWS,            // FileReadUTF16LE: 4 [handle, output, maxlen, ?getchar:gets]
+#endif//NSIS_SUPPORT_FILEFUNCTIONS
+#endif
 };
+
+#pragma pack(push, 1) // fileform.cpp assumes no padding/alignment
 
 #define FH_FLAGS_MASK 15
 #define FH_FLAGS_UNINSTALL 1
@@ -248,7 +260,11 @@ typedef struct
 
 // nsis blocks
 struct block_header {
+#ifdef MAKENSIS
   int offset;
+#else
+  UINT_PTR offset; // exehead stores a memory location here so it needs to be pointer sized
+#endif
   int num;
 };
 
@@ -270,14 +286,13 @@ enum {
 };
 
 // nsis strings
-
-typedef char NSIS_STRING[NSIS_MAX_STRLEN];
+typedef TCHAR NSIS_STRING[NSIS_MAX_STRLEN];
 
 // Settings common to both installers and uninstallers
 typedef struct
 {
   int flags; // CH_FLAGS_*
-  struct block_header blocks[BLOCKS_NUM];
+  struct block_header blocks[BLOCKS_NUM]; // CEXEBuild::get_header_size needs to adjust the size of this based on the targets pointer size
 
   // InstallDirRegKey stuff
   int install_reg_rootkey;
@@ -333,7 +348,7 @@ typedef struct
   int str_uninstcmd;
 #endif//NSIS_CONFIG_UNINSTALL_SUPPORT
 #ifdef NSIS_SUPPORT_MOVEONREBOOT
-  int str_wininit;
+  int str_wininit;   // Points to the path of wininit.ini
 #endif//NSIS_SUPPORT_MOVEONREBOOT
 } header;
 
@@ -376,18 +391,22 @@ typedef struct
   int name_ptr; // initial name pointer
   int install_types; // bits set for each of the different install_types, if any.
   int flags; // SF_* - defined above
-  int code;
-  int code_size;
+             // for labels, it looks like it's only used to track how often it is used.
+  int code;       // The "address" of the start of the code in count of struct entries.
+  int code_size;  // The size of the code in num of entries?
   int size_kb;
-  char name[NSIS_MAX_STRLEN]; // '' for invisible sections
+  TCHAR name[NSIS_MAX_STRLEN]; // '' for invisible sections
 } section;
 
 #define SECTION_OFFSET(field) (FIELD_OFFSET(section, field)/sizeof(int))
 
 typedef struct
 {
-  int which;
+  int which;   // EW_* enum.  Look at the enum values to see what offsets mean.
   int offsets[MAX_ENTRY_OFFSETS]; // count and meaning of offsets depend on 'which'
+                                  // sometimes they are just straight int values or bool
+                                  // values and sometimes they are indices into string
+                                  // tables.
 } entry;
 
 // page window proc
@@ -448,21 +467,58 @@ typedef struct
   int parms[5];
 } page;
 
-// text/bg color
+
+// EW_LOADANDSETIMAGE flags, masks and shifts
+#define LASIS_FITCTLW 31 // Top bit because it MUST shift to a value of 0 or 1
+#define LASIF_FITCTLW ( (unsigned int)1 << LASIS_FITCTLW )
+#define LASIF_FITCTLH ( (unsigned int)1 << 30 )
+#define LASIM_IMAGE  0x00000003 // IMAGE_*
+#define LASIF_EXERES 0x00000004 // GetModuleHandle(NULL).
+#define LASIF_HWND   0x00000100 // Don't call GetDlgItem.
+#define LASIF_STRID  0x00010000
+#define LASIM_LR   ( 0x0000fff0 & ~(LASIM_IMAGE|LASIF_EXERES|LASIF_HWND|LASIF_STRID) )
+#define LASIF_LR_LOADFROMFILE 0x00000010
+
+
+// ctlcolors text/bg color flags
 #define CC_TEXT 1
 #define CC_TEXT_SYS 2
 #define CC_BK 4
 #define CC_BK_SYS 8
 #define CC_BKB 16
+#define CC_FLAGSMASK 0x1f
+#define CC_FLAGSSHIFTFORZERO 5
 
 typedef struct {
   COLORREF text;
   COLORREF bkc;
   UINT lbStyle;
+#ifndef MAKENSIS
   HBRUSH bkb;
+#else
+  INT32 bkb;
+#endif
   int bkmode;
   int flags;
-} ctlcolors;
+} ctlcolors32;
+typedef struct {
+  COLORREF text;
+  COLORREF bkc;
+#ifndef MAKENSIS
+  HBRUSH bkb; // NOTE: Placed above lbStyle for better alignment
+#else
+  INT64 bkb;
+#endif
+  UINT lbStyle;
+  int bkmode;
+  int flags;
+} ctlcolors64;
+#if defined(_WIN64) && !defined(MAKENSIS)
+#  define ctlcolors ctlcolors64
+#else
+#  define ctlcolors ctlcolors32
+#endif
+
 
 // constants for myDelete (util.c)
 #define DEL_DIR 1
@@ -470,25 +526,78 @@ typedef struct {
 #define DEL_REBOOT 4
 #define DEL_SIMPLE 8
 
-// $0..$9, $INSTDIR, etc are encoded as ASCII bytes starting from this value.
-// Added by ramon 3 jun 2003
-#define NS_SKIP_CODE 252
-#define NS_VAR_CODE 253
-#define NS_SHELL_CODE 254
-#define NS_LANG_CODE 255
-#define NS_CODES_START NS_SKIP_CODE
 
+#define REGROOTVIEW32 0x40000000
+#define REGROOTVIEW64 0x20000000
+#define REGROOTVIEWTOSAMVIEW(rv) ( (UINT)(((UINT_PTR)(rv)&(REGROOTVIEW32|REGROOTVIEW64)) >> 21) ) // REGROOTVIEWxx to KEY_WOW64_xxKEY
+#define IsRegRootkeyForcedView(hKey) ( ((UINT_PTR) (hKey) & (REGROOTVIEW32|REGROOTVIEW64)) )
+#define MAKEREGROOTVIEW(r, fv) ( (HKEY) ((UINT_PTR)(r) | (fv)) )
+#define HKSHCTX ( (HKEY) 0 ) // Converted to HKCU or HKLM by GetRegRootKey
+#define HKSHCTX32 MAKEREGROOTVIEW(HKSHCTX, REGROOTVIEW32)
+#define HKSHCTX64 MAKEREGROOTVIEW(HKSHCTX, REGROOTVIEW64)
+#define HKCR32 MAKEREGROOTVIEW(HKEY_CLASSES_ROOT, REGROOTVIEW32)
+#define HKCR64 MAKEREGROOTVIEW(HKEY_CLASSES_ROOT, REGROOTVIEW64)
+#define HKCU32 MAKEREGROOTVIEW(HKEY_CURRENT_USER, REGROOTVIEW32)
+#define HKCU64 MAKEREGROOTVIEW(HKEY_CURRENT_USER, REGROOTVIEW64)
+#define HKLM32 MAKEREGROOTVIEW(HKEY_LOCAL_MACHINE, REGROOTVIEW32)
+#define HKLM64 MAKEREGROOTVIEW(HKEY_LOCAL_MACHINE, REGROOTVIEW64)
+#define HKSHCTXANY MAKEREGROOTVIEW(HKSHCTX, REGROOTVIEW32|REGROOTVIEW64)
+#define HKCRANY MAKEREGROOTVIEW(HKEY_CLASSES_ROOT, REGROOTVIEW32|REGROOTVIEW64)
+#define HKCUANY MAKEREGROOTVIEW(HKEY_CURRENT_USER, REGROOTVIEW32|REGROOTVIEW64)
+#define HKLMANY MAKEREGROOTVIEW(HKEY_LOCAL_MACHINE, REGROOTVIEW32|REGROOTVIEW64)
+#define DELREG_VALUE 0 // TOK_DELETEREGVALUE
+#define DELREG_KEY 1 // TOK_DELETEREGKEY
+#define DELREGKEY_ONLYIFNOSUBKEYS 1 // Shifted and stored as 2 in the binary for compatibility with <= 3.1
+#define DELREGKEYFLAGSSHIFT 1 // parm4 is shifted so exehead can remove the DELREG_KEY bit
+
+
+#ifdef NSIS_SUPPORT_CREATESHORTCUT
+#define CS_HK_MASK 0xffff0000 // HotKey
+#define CS_HK_SHIFT 16
+#define CS_NWD     0x00008000 // NoWorkingDirectory flag
+#define CS_SC_MASK 0x00007000 // ShowCmd
+#define CS_SC_SHIFT 12
+#define CS_II_MASK 0x00000fff // IconIndex
+#define CS_II_SHIFT 0
+#define CS_II_MAX (CS_II_MASK >> CS_II_SHIFT)
+#endif
+
+
+// special escape characters used in strings: (we use control codes in order to minimize conflicts with normal characters)
+#define NS_LANG_CODE  _T('\x01')    // for a langstring
+#define NS_SHELL_CODE _T('\x02')    // for a shell folder path
+#define NS_VAR_CODE   _T('\x03')    // for a variable
+#define NS_SKIP_CODE  _T('\x04')    // to consider next character as a normal character
+#define NS_IS_CODE(x) ((x) <= NS_SKIP_CODE) // NS_SKIP_CODE must always be the higher code
+
+// We are doing this to store an integer value into a char string and we
+// don't want false end of string values
 #define CODE_SHORT(x) (WORD)((((WORD)(x) & 0x7F) | (((WORD)(x) & 0x3F80) << 1) | 0x8080))
-#define MAX_CODED 16383
+#define MAX_CODED 0x3FFF
+// This macro takes a pointer to CHAR
+#define DECODE_SHORT(c) (((((char*)c)[1] & 0x7F) << 7) | (((char*)c)[0] & 0x7F))
 
 #define NSIS_INSTDIR_INVALID 1
 #define NSIS_INSTDIR_NOT_ENOUGH_SPACE 2
 
 #define FIELDN(x, y) (((int *)&x)[y])
 
-#ifdef EXEHEAD
+#pragma pack(pop)
 
+#define NSIS_MAX_EXEDATASIZE 0x7fffffffUL // Maximum size of .exe including compressed installer data.
+#ifndef NSIS_CONFIG_CRC_ANAL
+#define NSIS_MAX_EXEFILESIZE 0xffffffffUL // Maximum size of .exe including compressed installer data AND 3rd-party appended data. (Windows refuses to run .EXE files larger than 4 GiB)
+#else
+#define NSIS_MAX_EXEFILESIZE NSIS_MAX_EXEDATASIZE
+#endif
+
+#ifdef EXEHEAD
 // the following are only used/implemented in exehead, not makensis.
+
+#if NSIS_MAX_EXEDATASIZE <= 0xffffffffUL
+#define MAXEXEDATASIZETYPE UINT // Maximum size of .exe including compressed installer data. (Unsigned allows size including 3rd-party appeded data to be 4 GiB instead of 2 GiB)
+#endif
+#define MAXSIZETYPE UINT
 
 int NSISCALL isheader(firstheader *h); // returns 0 on not header, length_of_datablock on success
 
@@ -496,9 +605,9 @@ int NSISCALL isheader(firstheader *h); // returns 0 on not header, length_of_dat
 // returns 0 on success
 // on success, m_header will be set to a pointer that should eventually be GlobalFree()'d.
 // (or m_uninstheader)
-const char * NSISCALL loadHeaders(int cl_flags);
+const TCHAR * NSISCALL loadHeaders(int cl_flags);
 
-int NSISCALL _dodecomp(int offset, HANDLE hFileOut, char *outbuf, int outbuflen);
+int NSISCALL _dodecomp(int offset, HANDLE hFileOut, unsigned char *outbuf, int outbuflen);
 
 #define GetCompressedDataFromDataBlock(offset, hFileOut) _dodecomp(offset,hFileOut,NULL,0)
 #define GetCompressedDataFromDataBlockToMemory(offset, out, out_len) _dodecomp(offset,NULL,out,out_len)
@@ -512,13 +621,13 @@ DWORD NSISCALL SetSelfFilePointer(LONG lDistanceToMove);
 extern struct block_header g_blocks[BLOCKS_NUM];
 extern header *g_header;
 extern int g_flags;
-extern int g_filehdrsize;
+extern UINT g_filehdrsize;
 extern int g_is_uninstaller;
 
-#define g_pages ((page*)g_blocks[NB_PAGES].offset)
-#define g_sections ((section*)g_blocks[NB_SECTIONS].offset)
-#define num_sections (g_blocks[NB_SECTIONS].num)
-#define g_entries ((entry*)g_blocks[NB_ENTRIES].offset)
+#define g_pages ( (page*) g_blocks[NB_PAGES].offset )
+#define g_sections ( (section*) g_blocks[NB_SECTIONS].offset )
+#define num_sections ( g_blocks[NB_SECTIONS].num )
+#define g_entries ( (entry*) g_blocks[NB_ENTRIES].offset )
 #endif
 
 #endif //_FILEFORM_H_

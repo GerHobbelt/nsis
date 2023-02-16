@@ -25,6 +25,10 @@ pre {
 pre b {
 	text-decoration: underline;
 }
+code {
+	font-family: Courier New, Courier, monospace,monospace; /* code.iamkate.com/html-and-css/fixing-browsers-broken-monospace-font-handling/ */
+	font-size: 1em;
+}
 a {
 	color: #567599;
 	text-decoration: none;
@@ -42,4 +46,10 @@ a:hover {
 	background-color: #F4F4F4;
 	color: #000000;
 	text-decoration: underline;
+}
+.wb {
+	background-color: #FFFFD8;
+	color: #000000;
+	border: 1px solid #CECEAA;
+	padding: 0.2em;
 }

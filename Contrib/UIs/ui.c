@@ -1,6 +1,8 @@
 // ui.cpp : Defines the entry point for the application.
 //
+// Unicode support by Jim Park -- 08/10/2007
 
+#include "../../Source/Platform.h"
 #include <windows.h>
 #include <commctrl.h>
 #include "resource.h"
@@ -8,7 +10,7 @@
 HINSTANCE g_hInstance;
 HWND m_curwnd;
 
-char* windows[] = {
+const TCHAR* windows[] = {
   MAKEINTRESOURCE(IDD_LICENSE),
   MAKEINTRESOURCE(IDD_SELCOM),
   MAKEINTRESOURCE(IDD_DIR),
@@ -16,7 +18,7 @@ char* windows[] = {
   MAKEINTRESOURCE(IDD_UNINST)
 };
 
-BOOL CALLBACK GenericProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam) {
+INT_PTR CALLBACK GenericProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam) {
   static LOGBRUSH b = {BS_SOLID, RGB(255,0,0), 0};
   static HBRUSH red;
 
@@ -25,26 +27,26 @@ BOOL CALLBACK GenericProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam) {
 
   switch (uMsg) {
     case WM_CTLCOLORSTATIC:
-      return (int)red;
+      return (INT_PTR)red;
   }
-  return 0;
+  return FALSE;
 }
 
-BOOL CALLBACK DialogProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam) {
+INT_PTR CALLBACK DialogProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam) {
   static int i = -1;
-	switch (uMsg) {
-	case WM_INITDIALOG:
-		SetWindowText(hwndDlg, "NSIS User Interface - Testing");
-		SetWindowText(GetDlgItem(hwndDlg, IDC_VERSTR), "NSIS version");
-		SetWindowText(GetDlgItem(hwndDlg, IDC_BACK), "< Back");
-		SetWindowText(GetDlgItem(hwndDlg, IDOK), "Next >");
-		SetWindowText(GetDlgItem(hwndDlg, IDCANCEL), "Cancel");
-		ShowWindow(GetDlgItem(hwndDlg, IDC_BACK), SW_SHOW);
-		ShowWindow(GetDlgItem(hwndDlg, IDC_CHILDRECT), SW_SHOW);
+  switch (uMsg) {
+  case WM_INITDIALOG:
+    SetWindowText(hwndDlg, _T("NSIS User Interface - Testing"));
+    SetWindowText(GetDlgItem(hwndDlg, IDC_VERSTR), _T("NSIS version"));
+    SetWindowText(GetDlgItem(hwndDlg, IDC_BACK), _T("< Back"));
+    SetWindowText(GetDlgItem(hwndDlg, IDOK), _T("Next >"));
+    SetWindowText(GetDlgItem(hwndDlg, IDCANCEL), _T("Cancel"));
+    ShowWindow(GetDlgItem(hwndDlg, IDC_BACK), SW_SHOW);
+    ShowWindow(GetDlgItem(hwndDlg, IDC_CHILDRECT), SW_SHOW);
     SendMessage(hwndDlg, WM_COMMAND, MAKEWORD(IDOK, 0), 0);
-		ShowWindow(hwndDlg, SW_SHOW);
-		break;
-	case WM_COMMAND:
+    ShowWindow(hwndDlg, SW_SHOW);
+    break;
+  case WM_COMMAND:
     switch (LOWORD(wParam)) {
     case IDOK:
     case IDC_BACK:
@@ -53,7 +55,7 @@ BOOL CALLBACK DialogProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam) {
         i++;
         break;
       }
-      if (i >= (int)sizeof(windows)/sizeof(char*)) {
+      if (i >= (int)sizeof(windows)/sizeof(TCHAR*)) {
         i--;
         break;
       }
@@ -74,29 +76,16 @@ BOOL CALLBACK DialogProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam) {
       break;
     }
     break;
-	}
-	return 0;
+    }
+    return FALSE;
 }
 
-int APIENTRY WinMain(HINSTANCE hInstance,
-                     HINSTANCE hPrevInstance,
-                     LPSTR     lpCmdLine,
-                     int       nCmdShow)
+NSIS_ENTRYPOINT_SIMPLEGUI
+int WINAPI _tWinMain(HINSTANCE hInst,HINSTANCE hOldInst,LPTSTR CmdLineParams,int ShowCmd)
 {
   InitCommonControls();
-
-  LoadLibrary("RichEd32.dll");
-
-  g_hInstance = GetModuleHandle(0);
-
-	DialogBox(
-		GetModuleHandle(0),
-		MAKEINTRESOURCE(IDD_INST),
-		0,
-		DialogProc
-	);
-
-	ExitProcess(0);
-
-	return 0;
+  g_hInstance = hInst;
+  LoadLibrary(_T("RichEd32.dll"));
+  return (int) DialogBox(g_hInstance,MAKEINTRESOURCE(IDD_INST),0,DialogProc);
 }
+

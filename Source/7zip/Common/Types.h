@@ -4,7 +4,7 @@
  * This file is a part of LZMA compression module for NSIS.
  * 
  * Original LZMA SDK Copyright (C) 1999-2006 Igor Pavlov
- * Modifications Copyright (C) 2003-2006 Amir Szekely <kichik@netvision.net.il>
+ * Modifications Copyright (C) 2003-2019 Amir Szekely <kichik@netvision.net.il>
  * 
  * Licensed under the Common Public License version 1.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,53 +18,81 @@
 #ifndef __COMMON_TYPES_H
 #define __COMMON_TYPES_H
 
+#ifdef _WIN32
+#include <windows.h>
+
 #ifndef _7ZIP_BYTE_DEFINED
 #define _7ZIP_BYTE_DEFINED
-typedef unsigned char Byte;
+typedef UINT8 Byte;
 #endif 
 
 #ifndef _7ZIP_INT16_DEFINED
 #define _7ZIP_INT16_DEFINED
-typedef short Int16;
+typedef INT16 Int16;
 #endif 
 
 #ifndef _7ZIP_UINT16_DEFINED
 #define _7ZIP_UINT16_DEFINED
-typedef unsigned short UInt16;
+typedef UINT16 UInt16;
 #endif 
 
 #ifndef _7ZIP_INT32_DEFINED
 #define _7ZIP_INT32_DEFINED
-typedef int Int32;
+typedef INT32 Int32;
 #endif 
 
 #ifndef _7ZIP_UINT32_DEFINED
 #define _7ZIP_UINT32_DEFINED
-typedef unsigned int UInt32;
+typedef UINT32 UInt32;
 #endif 
-
-#ifdef _MSC_VER
 
 #ifndef _7ZIP_INT64_DEFINED
 #define _7ZIP_INT64_DEFINED
-typedef __int64 Int64;
+typedef INT64 Int64;
 #endif 
 
 #ifndef _7ZIP_UINT64_DEFINED
 #define _7ZIP_UINT64_DEFINED
-typedef unsigned __int64 UInt64;
+typedef UINT64 UInt64;
 #endif 
 
-#else
+#else // !_WIN32
+
+#include <stdint.h>
+
+#ifndef _7ZIP_BYTE_DEFINED
+#define _7ZIP_BYTE_DEFINED
+typedef uint8_t Byte;
+#endif 
+
+#ifndef _7ZIP_INT16_DEFINED
+#define _7ZIP_INT16_DEFINED
+typedef int16_t Int16;
+#endif 
+
+#ifndef _7ZIP_UINT16_DEFINED
+#define _7ZIP_UINT16_DEFINED
+typedef uint16_t UInt16;
+#endif 
+
+#ifndef _7ZIP_INT32_DEFINED
+#define _7ZIP_INT32_DEFINED
+typedef int32_t Int32;
+#endif 
+
+#ifndef _7ZIP_UINT32_DEFINED
+#define _7ZIP_UINT32_DEFINED
+typedef uint32_t UInt32;
+#endif 
 
 #ifndef _7ZIP_INT64_DEFINED
 #define _7ZIP_INT64_DEFINED
-typedef long long int Int64;
+typedef int64_t Int64;
 #endif 
 
 #ifndef _7ZIP_UINT64_DEFINED
 #define _7ZIP_UINT64_DEFINED
-typedef unsigned long long int UInt64;
+typedef uint64_t UInt64;
 #endif 
 
 #endif

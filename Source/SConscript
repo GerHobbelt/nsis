@@ -19,10 +19,14 @@ makensis_files = Split("""
 	Plugins.cpp
 	ResourceEditor.cpp
 	ResourceVersionInfo.cpp
+	BinInterop.cpp
 	script.cpp
+	scriptpp.cpp
 	ShConstants.cpp
 	strlist.cpp
 	tokens.cpp
+	tstring.cpp
+	utf.cpp
 	util.cpp
 	winchar.cpp
 	writer.cpp
@@ -51,6 +55,8 @@ libs = Split("""
 	user32
 	pthread
 	iconv
+	shlwapi
+	oleaut32
 """)
 
 Import('env AddAvailableLibs AddZLib')
@@ -67,6 +73,7 @@ AddZLib(env, env['PLATFORM'], 'install-compiler')
 
 ##### Defines
 
+env.Append(CPPDEFINES = ['MAKENSIS'])
 env.Append(CPPDEFINES = ['_WIN32_IE=0x0500'])
 
 ##### Set PCH

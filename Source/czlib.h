@@ -3,7 +3,7 @@
  * 
  * This file is a part of NSIS.
  * 
- * Copyright (C) 1999-2009 Nullsoft and Contributors
+ * Copyright (C) 1999-2019 Nullsoft and Contributors
  * 
  * Licensed under the zlib/libpng license (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,8 @@
  * 
  * This software is provided 'as-is', without any express or implied
  * warranty.
+ *
+ * Unicode support by Jim Park -- 08/24/2007
  */
 
 #ifndef __CZLIB_H__
@@ -24,34 +26,33 @@ class CZlib : public ICompressor {
   public:
     virtual ~CZlib() {}
 
-    int Init(int level, unsigned int dict_size) {
+    virtual int Init(int level, unsigned int dict_size) {
       stream = new z_stream;
       if (!stream) return Z_MEM_ERROR;
 
       stream->zalloc = (alloc_func)Z_NULL;
       stream->zfree = (free_func)Z_NULL;
       stream->opaque = (voidpf)Z_NULL;
-
       return deflateInit2(stream, level,
         Z_DEFLATED, -MAX_WBITS, MAX_MEM_LEVEL, Z_DEFAULT_STRATEGY);
     }
 
-    int End() {
+    virtual int End() {
       int ret = deflateEnd(stream);
       delete stream;
       return ret;
     }
 
-    int Compress(bool finish) {
+    virtual int Compress(bool finish) {
       return deflate(stream, finish?Z_FINISH:0);
     }
 
-    void SetNextIn(char *in, unsigned int size) {
+    virtual void SetNextIn(char *in, unsigned int size) {
       stream->next_in = (unsigned char*)in;
       stream->avail_in = size;
     }
 
-    void SetNextOut(char *out, unsigned int size) {
+    virtual void SetNextOut(char *out, unsigned int size) {
       stream->next_out = (unsigned char*)out;
       stream->avail_out = size;
     }
@@ -68,25 +69,25 @@ class CZlib : public ICompressor {
       return stream->avail_out;
     }
 
-    const char* GetName() {
-      return "zlib";
+    virtual const TCHAR* GetName() {
+      return _T("zlib");
     }
 
-    const char* GetErrStr(int err) {
+    virtual const TCHAR* GetErrStr(int err) {
       switch (err)
       {
       case Z_STREAM_ERROR:
-        return "invalid stream - bad call";
+        return _T("invalid stream - bad call");
       case Z_DATA_ERROR:
-        return "data error";
+        return _T("data error");
       case Z_MEM_ERROR:
-        return "not enough memory";
+        return _T("not enough memory");
       case Z_BUF_ERROR:
-        return "buffer error - bad call";
+        return _T("buffer error - bad call");
       case Z_VERSION_ERROR:
-        return "version error";
+        return _T("version error");
       default:
-        return "unknown error";
+        return _T("unknown error");
       }
     }
 

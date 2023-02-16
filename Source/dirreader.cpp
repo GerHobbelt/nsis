@@ -3,7 +3,7 @@
  * 
  * This file is a part of NSIS.
  * 
- * Copyright (C) 1999-2009 Nullsoft and Contributors
+ * Copyright (C) 1999-2019 Nullsoft and Contributors
  * 
  * Licensed under the zlib/libpng license (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,36 +16,40 @@
 
 #include "Platform.h"
 #include "dirreader.h"
-#include <string>
+#include "tstring.h"
+#include "util.h"
 #include <set>
 
 #include <string.h> // for stricmp()
 #include <ctype.h> // for tolower()
+#ifdef _UNICODE
+#  include <wctype.h> // towlower()
+#endif
 
 using namespace std;
 
 dir_reader::dir_reader() {
-  exclude(".");
-  exclude("..");
+  exclude(_T("."));
+  exclude(_T(".."));
 }
 
-const set<string>& dir_reader::files() {
+const set<tstring>& dir_reader::files() {
   return m_files;
 }
 
-const set<string>& dir_reader::dirs() {
+const set<tstring>& dir_reader::dirs() {
   return m_dirs;
 }
 
-void dir_reader::exclude(const string& spec) {
-  if (spec.find_first_of("?*") != string::npos) {
+void dir_reader::exclude(const tstring& spec) {
+  if (spec.find_first_of(_T("?*")) != tstring::npos) {
     m_wildcard_excluded.insert(spec);
   } else {
     m_excluded.insert(spec);
   }
 }
 
-void dir_reader::exclude(const set<string>& specs) {
+void dir_reader::exclude(const set<tstring>& specs) {
   iterator i = specs.begin();
   iterator e = specs.end();
 
@@ -54,27 +58,27 @@ void dir_reader::exclude(const set<string>& specs) {
   }
 }
 
-bool dir_reader::matches(const string& name, const string& spec) {
-  string::const_iterator name_itr = name.begin();
-  string::const_iterator name_end = name.end();
+bool dir_reader::matches(const tstring& name, const tstring& spec) {
+  tstring::const_iterator name_itr = name.begin();
+  tstring::const_iterator name_end = name.end();
 
-  string::const_iterator spec_itr = spec.begin();
-  string::const_iterator spec_end = spec.end();
+  tstring::const_iterator spec_itr = spec.begin();
+  tstring::const_iterator spec_end = spec.end();
 
-  string::const_iterator last_good_spec = spec_end;
-  string::const_iterator last_good_name = name_end;
+  tstring::const_iterator last_good_spec = spec_end;
+  tstring::const_iterator last_good_name = name_end;
 
   while (name_itr != name_end && spec_itr != spec_end) {
     switch (*spec_itr) {
-      case '?':
+      case _T('?'):
         // question mark mathes one char
         name_itr++;
         spec_itr++;
         break;
 
-      case '*':
+      case _T('*'):
         // double asterisk is the same as a single asterisk
-        while (*spec_itr == '*') {
+        while (*spec_itr == _T('*')) {
           spec_itr++;
           // asterisk at the end of the spec matches the end of the name
           if (spec_itr == spec_end)
@@ -88,6 +92,7 @@ bool dir_reader::matches(const string& name, const string& spec) {
         break;
 
       default:
+        // Jim Park: This should work since tolower is templated with Chartype.
         if (::tolower(*name_itr) != ::tolower(*spec_itr)) {
           if (last_good_spec != spec_end) {
             // matched wrong part of the name, try again
@@ -115,7 +120,7 @@ bool dir_reader::matches(const string& name, const string& spec) {
 
   // skip any redundant asterisks and periods at the end of the name
   while (spec_itr != spec_end) {
-    if (*spec_itr != '.' && *spec_itr != '*') {
+    if (*spec_itr != _T('.') && *spec_itr != _T('*')) {
       break;
     }
     spec_itr++;
@@ -125,24 +130,24 @@ bool dir_reader::matches(const string& name, const string& spec) {
   return name_itr == name_end && spec_itr == spec_end;
 }
 
-void dir_reader::add_file(const string& file) {
+void dir_reader::add_file(const tstring& file) {
   if (!is_excluded(file)) {
     m_files.insert(file);
   }
 }
 
-void dir_reader::add_dir(const string& dir) {
+void dir_reader::add_dir(const tstring& dir) {
   if (!is_excluded(dir)) {
     m_dirs.insert(dir);
   }
 }
 
-bool dir_reader::is_excluded(const string& name) const {
+bool dir_reader::is_excluded(const tstring& name) const {
   iterator i = m_excluded.begin();
   iterator e = m_excluded.end();
 
   for (; i != e; i++) {
-    if (!::stricmp(name.c_str(), i->c_str())) {
+    if (!::_tcsicmp(name.c_str(), i->c_str())) {
       return true;
     }
   }
@@ -164,19 +169,18 @@ bool dir_reader::is_excluded(const string& name) const {
 class win32_dir_reader : public dir_reader {
 public:
 
-  virtual void read(const string& dir) {
+  virtual void read(const tstring& dir) {
     WIN32_FIND_DATA fd;
 
-    string spec = dir + PLATFORM_PATH_SEPARATOR_STR + "*.*";
+    tstring spec = dir + PLATFORM_PATH_SEPARATOR_STR + _T("*.*");
 
     HANDLE h = ::FindFirstFile(spec.c_str(), &fd);
     if (h != INVALID_HANDLE_VALUE) {
       do {
-        if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+        if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
           dir_reader::add_dir(fd.cFileName);
-        } else {
+        else
           dir_reader::add_file(fd.cFileName);
-        }
       } while (::FindNextFile(h, &fd));
       ::FindClose(h);
     }
@@ -193,44 +197,34 @@ public:
 class posix_dir_reader : public dir_reader {
 public:
 
-  virtual void read(const string& dir) {
-    //convert(dir);
+  virtual void read(const tstring& dir) {
 
-    DIR *dip = ::opendir(dir.c_str());
+    static const char platformpathsep[2] = {(char)PLATFORM_PATH_SEPARATOR_C, '\0'};
+
+    char *nativedir = NSISRT_ttombpath(dir.c_str());
+    if (!nativedir) return ;
+
+    DIR *dip = ::opendir(nativedir);
     if (dip) {
       dirent *dit;
       while ((dit = ::readdir(dip))) {
         struct stat st;
-        string file = dir + PLATFORM_PATH_SEPARATOR_STR + dit->d_name;
+        string file = nativedir;
+        file += platformpathsep, file += dit->d_name;
 
         if (!stat(file.c_str(), &st)) {
-          if (S_ISDIR(st.st_mode)) {
-            dir_reader::add_dir(dit->d_name);
-          } else {
-            dir_reader::add_file(dit->d_name);
-          }
+          tstring name;
+          name = PosixBug_CtoTString(dit->d_name);
+          if (S_ISDIR(st.st_mode))
+            dir_reader::add_dir(name);
+          else
+            dir_reader::add_file(name);
         }
       }
       ::closedir(dip);
     }
+    NSISRT_free(nativedir);
   }
-
-private:
-
-  void convert(string& path) {
-    string::size_type pos = path.find('\\');
-    while (pos != string::npos) {
-      path[pos] = '/';
-      pos = path.find('\\');
-    }
-
-    /* Replace drive letter X: by /x */
-    if (path[1] == ':') {
-      path[1] = ::tolower(path[0]);
-      path[0] = '/';
-    }
-  }
-
 };
 
 #endif

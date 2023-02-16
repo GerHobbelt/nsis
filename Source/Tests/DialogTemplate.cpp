@@ -11,6 +11,7 @@ class CDialogTemplateTest : public CppUnit::TestFixture {
 
 public:
   void testCorrectness() {
+    const bool unicode_classes = false;
     unsigned char original_dialog[184] = {
       1, 0, 255, 255, 0, 0, 0, 0, 0, 0,
       0, 0, 72, 4, 0, 64, 3, 0, 0, 0, 0,
@@ -31,7 +32,7 @@ public:
       0, 65, 0, 0, 0, 0, 0, 0, 0
     };
     
-    CDialogTemplate dt(original_dialog, 1252);
+    CDialogTemplate dt(original_dialog, unicode_classes, 1252);
 
     DWORD dwSize;
     unsigned char *saved_dialog = dt.Save(dwSize);
@@ -39,7 +40,7 @@ public:
     CPPUNIT_ASSERT_EQUAL( (DWORD) sizeof(original_dialog), dwSize );
     CPPUNIT_ASSERT_EQUAL( 0, memcmp(saved_dialog, original_dialog, dwSize) );
 
-    delete [] saved_dialog;
+    dt.FreeSavedTemplate(saved_dialog);
   }
 
 };

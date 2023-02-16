@@ -1,10 +1,20 @@
-print "Using GNU tools configuration"
+print("Using GNU tools configuration")
 
 Import('defenv')
 
 ### imports
 
-Import('FlagsConfigure')
+Import('FlagsConfigure GetOptionOrEnv')
+
+### HACKS!
+if GetOptionOrEnv('NSIS_SCONS_GNU_ENVPATHHACK'):
+	import os
+	defenv['ENV']['PATH'] = os.getenv('PATH') # Major hack!
+	import_env = ['SystemDrive', 'SystemRoot', 'TEMP', 'TMP', 'PATHEXT']
+	for var in import_env: 
+		if var in os.environ:
+			defenv['ENV'][var] = os.environ.get(var, '')
+	#print(defenv.Dump())
 
 ### cross compiling
 
@@ -14,11 +24,12 @@ def cross_env(env):
 
 ### flags
 
-def entry(x):
-	if x == 'WinMain':
-		x = '_WinMain@16'
-	elif x == 'DllMain':
-		x = '_DllMain@12'
+def entry(x,u):
+	if defenv['TARGET_ARCH'] == 'x86':
+		if x == 'NSISWinMainNOCRT':
+			x = '_' + x
+		elif x == 'DllMain':
+			x = '_DllMain@12'
 	return '-Wl,-e%s' % x
 
 defenv['ENTRY_FLAG'] = entry
@@ -30,8 +41,14 @@ defenv['CPP_FLAG'] = '-xc++'
 defenv['ALIGN_FLAG'] = '-Wl,--file-alignment,512'
 defenv['CPP_REQUIRES_STDLIB'] = 1
 defenv['SUBSYS_CON'] = '-Wl,--subsystem,console'
+defenv['SUBSYS_WIN'] = '-Wl,--subsystem,windows'
 defenv['MSVCRT_FLAG'] = ''
-defenv['STDCALL'] = ' __attribute__((__stdcall__))'
+defenv['STDCALL'] = '"__attribute__((__stdcall__))"'
+
+# Don't allow mingw to link with LIBGCC*.DLL and LIBSTDC++-*.DLL 
+if defenv['PLATFORM'] == 'win32':
+	defenv.Append(LINKFLAGS = ['-static-libgcc'])
+	defenv.Append(LINKFLAGS = ['-static-libstdc++'])
 
 ### defines
 
@@ -61,6 +78,11 @@ def TestStrip(ctx):
 if defenv['DEBUG']:
 	defenv.Append(CCFLAGS = '-g')
 
+### unicode
+tdefenv = defenv.Clone()
+if tdefenv['UNICODE']:
+	tdefenv.Append(CPPDEFINES = ['_UNICODE', 'UNICODE'])
+
 ### stub environment
 
 stub_env = defenv.Clone()
@@ -79,24 +101,25 @@ if not defenv['DEBUG'] and defenv['STRIP'] and defenv['STRIP_W32']:
 stub_env.Append(LINKFLAGS = ['-mwindows'])          # build windows executables
 stub_env.Append(LINKFLAGS = ['$NODEFLIBS_FLAG'])    # no standard libraries
 stub_env.Append(LINKFLAGS = ['$ALIGN_FLAG'])        # 512 bytes align
-stub_env.Append(LINKFLAGS = ['-Wl,-e,_WinMain@16']) # entry point
 stub_env.Append(LINKFLAGS = ['$MAP_FLAG'])          # generate map file
+
+stub_uenv = stub_env.Clone()
+stub_uenv.Append(CPPDEFINES = ['_UNICODE', 'UNICODE'])
 
 ### makensis environment
 
-makensis_env = defenv.Clone()
+makensis_env = tdefenv.Clone()
 
 makensis_env.Append(CPPPATH = ['#$BUILD_CONFIG'])
 
 if not defenv['DEBUG']:
-	makensis_env.Append(CCFLAGS = ['-O2'])                  # optimize
+	makensis_env.Append(CCFLAGS = ['-O2'])                # optimize
 makensis_env.Append(CFLAGS = ['-Wall'])                   # all warnings
 makensis_env.Append(CXXFLAGS = ['-Wno-non-virtual-dtor']) # ignore virtual dtor warnings
 makensis_env.Append(CXXFLAGS = ['-Wall'])                 # all warnings
+makensis_env['STDCALL'] = ''                              # avoid warnings
 
 conf = FlagsConfigure(makensis_env)
-conf.CheckCompileFlag('-m32')                     #
-conf.CheckLinkFlag('-m32')                        #
 conf.CheckLinkFlag('$MAP_FLAG')                   # generate map file
 if not defenv['DEBUG'] and defenv['STRIP'] and defenv['STRIP_CP']:
 	TestStrip(conf)                                 # strip
@@ -118,12 +141,22 @@ plugin_env.Append(LINKFLAGS = ['-mwindows'])        # build windows executables
 plugin_env.Append(LINKFLAGS = ['$ALIGN_FLAG'])      # 512 bytes align
 plugin_env.Append(LINKFLAGS = ['$MAP_FLAG'])        # generate map file
 plugin_env.Append(LINKFLAGS = ['-static-libgcc'])   # remove libgcc*.dll dependency
+plugin_env.Append(LINKFLAGS = ['-static-libstdc++']) # remove libstdc++*.dll dependency
+
+plugin_uenv = plugin_env.Clone()
+plugin_uenv.Append(CPPDEFINES = ['_UNICODE', 'UNICODE'])
 
 ### cross-platform util environment
 
-cp_util_env = defenv.Clone()
+if defenv['PLATFORM'] == 'win32':
+	cp_util_env = tdefenv.Clone()
+else:
+	cp_util_env = defenv.Clone()
 
 cp_util_env.Append(CPPPATH = ['#$BUILD_CONFIG'])
+
+if cp_util_env['PLATFORM'] == 'win32':
+	cp_util_env.Append(LINKFLAGS = ['$ALIGN_FLAG']) # 512 bytes align
 
 if not defenv['DEBUG']:
 	cp_util_env.Append(CCFLAGS = ['-O2'])             # optimize
@@ -136,11 +169,19 @@ conf.Finish()
 
 ### util environment
 
-util_env = cp_util_env.Clone()
+util_env = tdefenv.Clone()
 cross_env(util_env)
+
+util_env.Append(CPPPATH = ['#$BUILD_CONFIG'])
+
+if not defenv['DEBUG']:
+	util_env.Append(CCFLAGS = ['-O2'])             # optimize
+util_env.Append(CCFLAGS = ['-Wall'])             # all warnings
+util_env.Append(CCFLAGS = ['-fno-strict-aliasing']) # not safe for strict aliasing
 
 util_env.Append(LINKFLAGS = ['-mwindows'])          # build windows executables
 util_env.Append(LINKFLAGS = ['$ALIGN_FLAG'])        # 512 bytes align
+
 
 conf = FlagsConfigure(util_env)
 if not defenv['DEBUG'] and defenv['STRIP'] and defenv['STRIP_W32']:
@@ -150,8 +191,6 @@ conf.Finish()
 ### cross-platform util environment adjustments
 
 conf = FlagsConfigure(cp_util_env)
-conf.CheckCompileFlag('-m32')
-conf.CheckLinkFlag('-m32')
 if not defenv['DEBUG'] and defenv['STRIP'] and defenv['STRIP_CP']:
 	TestStrip(conf)                                 # strip
 conf.Finish()
@@ -159,10 +198,9 @@ conf.Finish()
 ### test environment
 
 test_env = defenv.Clone()
+test_env['STDCALL'] = ''                                # avoid warnings
 test_env.Append(CPPPATH = ['#$BUILD_CONFIG'])
 conf = FlagsConfigure(test_env)
-conf.CheckCompileFlag('-m32')
-conf.CheckLinkFlag('-m32')
 conf.Finish()
 
 ### weird GCC requirements
@@ -177,7 +215,14 @@ conf.Finish()
 # sure the sections will be written in the correct order.
 #
 
+petype = 'pei-i386'
+if defenv['TARGET_ARCH'] == 'amd64':
+	petype = 'pei-x86-64'
+stub_env.Append(LINKFLAGS = ['-B', petype]) # --oformat petype also works in GCC 4.5.2
+stub_uenv.Append(LINKFLAGS = ['-B', petype])
 stub_env.Append(LINKFLAGS = ['-T', File('linker_script').rfile()])
+stub_uenv.Append(LINKFLAGS = ['-T', File('linker_script').rfile()])
+
 
 #
 # GCC requires some functions from the CRT to be present, if certain
@@ -232,6 +277,8 @@ def add_file(file):
 	add_file_to_emitter(stub_env, 'PROGEMITTER', file)
 	add_file_to_emitter(util_env, 'PROGEMITTER', file)
 	add_file_to_emitter(plugin_env, 'SHLIBEMITTER', file)
+	add_file_to_emitter(stub_uenv, 'PROGEMITTER', file)
+	add_file_to_emitter(plugin_uenv, 'SHLIBEMITTER', file)
 
 cenv = defenv.Clone()
 cross_env(cenv)
@@ -313,6 +360,10 @@ if makensis_env['PLATFORM'] == 'hpux':
 	makensis_conf.CheckLib("hppa")
 	makensis_conf.Finish()
 
+### print version info
+stub_env.Execute('$CC --version')
+makensis_env.Execute('$CXX --version')
+
 ### return
 
-Return('stub_env makensis_env plugin_env util_env cp_util_env test_env')
+Return('stub_env makensis_env plugin_env util_env cp_util_env test_env stub_uenv plugin_uenv')

@@ -43,7 +43,7 @@ import SCons.Tool
 import SCons.Util
 
 # This is what we search for to find mingw:
-prefixes = SCons.Util.Split("""
+prefixes32 = SCons.Util.Split("""
     mingw32-
     mingw32msvc-
     i386-mingw32-
@@ -58,9 +58,26 @@ prefixes = SCons.Util.Split("""
     i486-pc-mingw32-
     i586-pc-mingw32-
     i686-pc-mingw32-
+    i386-w64-mingw32-
+    i486-w64-mingw32-
+    i586-w64-mingw32-
+    i686-w64-mingw32-
+""")
+
+prefixes64 = SCons.Util.Split("""
+    x86_64-w64-mingw32-
 """)
 
 def find(env):
+    # Explicitly specified toolchain to build Windows executables
+    # takes predominance.
+    prefix = SCons.Script.ARGUMENTS.get('XGCC_W32_PREFIX', None)
+    prefixes = prefixes32
+    if env['TARGET_ARCH'] == 'amd64':
+        prefixes = prefixes64
+
+    if prefix:
+        prefixes.insert(0, prefix)
     for prefix in prefixes:
         # First search in the SCons path and then the OS path:
         if env.WhereIs(prefix + 'gcc') or SCons.Util.WhereIs(prefix + 'gcc'):

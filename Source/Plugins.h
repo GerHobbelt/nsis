@@ -3,7 +3,7 @@
  * 
  * This file is a part of NSIS.
  * 
- * Copyright (C) 1999-2009 Nullsoft and Contributors
+ * Copyright (C) 1999-2019 Nullsoft and Contributors
  * 
  * Licensed under the zlib/libpng license (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,32 +12,64 @@
  * 
  * This software is provided 'as-is', without any express or implied
  * warranty.
+ *
  */
 
-#ifndef __X18_PLUGINS_H
-#define __X18_PLUGINS_H
+#ifndef NSIS_EXEHEADPLUGINS_H
+#define NSIS_EXEHEADPLUGINS_H
 
 #include <map>
-#include <string>
+#include <set>
+#include "tstring.h"
+
+namespace STL 
+{
+  template<class S, class C>
+  struct string_nocasecmpless : std::binary_function<S, S, bool> 
+  {
+    struct cmp : public std::binary_function<C, C, bool> 
+    {
+      bool operator() (const C&a, const C&b) const 
+      {
+        return tolower(a) < tolower(b); 
+      }
+    };
+    bool operator() (const S&a,const S&b) const
+    {
+      return std::lexicographical_compare(a.begin(), a.end(), b.begin(), b.end(), cmp());
+    }
+  };
+}
 
 class Plugins
 {
   public:
-    void FindCommands(const std::string& path, bool displayInfo);
-    bool IsPluginCommand(const std::string& command) const;
-    std::string NormalizedCommand(const std::string& command) const;
-    int GetPluginHandle(bool uninst, const std::string& command) const;
-    std::string GetPluginPath(const std::string& command) const;
-    void SetDllDataHandle(bool uninst, const std::string& command, int dataHandle);
+    typedef STL::string_nocasecmpless<tstring, tstring::value_type> strnocasecmp;
+
+    Plugins() : m_initialized(false) {}
+
+    bool Initialize(const TCHAR*arcsubdir, bool pe64, bool displayInfo);
+    void AddPluginsDir(const tstring& path, bool pe64, bool displayInfo);
+    bool FindDllPath(const tstring filename, tstring&dllPath);
+    bool IsPluginCommand(const tstring& command) const;
+    bool IsKnownPlugin(const tstring& token) const;
+    bool GetCommandInfo(const tstring&command, tstring&canoniccmd, tstring&dllPath);
+    int GetDllDataHandle(bool uninst, const tstring& command) const;
+    void SetDllDataHandle(bool uninst, tstring&canoniccmd, int dataHandle);
+    static bool IsPluginCallSyntax(const tstring& token);
+    void PrintPluginDirs();
 
   private: // methods
-    void GetExports(const std::string &pathToDll, bool displayInfo);
+    void GetExports(const tstring &pathToDll, bool pe64, bool displayInfo);
+    bool DllHasDataHandle(const tstring& dllnamelowercase) const;
 
   private: // data members
-    std::map<std::string, std::string> m_command_lowercase_to_command;
-    std::map<std::string, std::string> m_command_to_path;
-    std::map<std::string, int> m_command_to_data_handle;
-    std::map<std::string, int> m_command_to_uninstall_data_handle;
+    std::set<tstring, strnocasecmp> m_commands;
+    std::map<tstring, tstring, strnocasecmp> m_dllname_to_path;
+    std::map<tstring, int, strnocasecmp> m_dllname_to_inst_datahandle;
+    std::map<tstring, int, strnocasecmp> m_dllname_to_unst_datahandle;
+    std::set<tstring, strnocasecmp> m_dllname_conflicts;
+    bool m_initialized;
 };
 
 #endif

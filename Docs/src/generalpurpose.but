@@ -4,7 +4,7 @@
 
 \c dllfile function_name
 
-Calls a function named \e{function_name} inside a NSIS extension DLL, a plug-in. See the \L{../Examples/Plugin/}{example plugin} for how to make one. Extension DLLs can access the stack and variables. Note: To automatically extract and call plug-in DLLs, use a plug-in command instead of CallInstDLL.
+Calls a function named \e{function_name} inside a NSIS extension DLL, a plug-in. See the \L{../Examples/Plugin/}{example plugin} for how to make one. Extension DLLs can access the stack and variables. Note: To automatically extract and call plug-in DLLs, use a plug-in command instead of \R{callinstdll}{CallInstDLL}.
 
 \c Push "a parameter"
 \c Push "another parameter"
@@ -33,19 +33,20 @@ You should always specify an absolute path.
 
 \c CreateDirectory $INSTDIR\some\directory
 
-\S2{createshortcut} CreateShortCut
+\S2{createshortcut} CreateShortcut
 
-\c link.lnk target.file [parameters [icon.file [icon_index_number [start_options [keyboard_shortcut [description]]]]]]
+\c [/NoWorkingDir] link.lnk target.file [parameters [icon.file [icon_index_number [start_options [keyboard_shortcut [description]]]]]]
 
 Creates a shortcut 'link.lnk' that links to 'target.file', with optional parameters 'parameters'.
+You must specify an absolute path to the .lnk file.
 The icon used for the shortcut is 'icon.file,icon_index_number'; for default icon settings use empty strings for both icon.file and icon_index_number.
 start_options should be one of: \e{SW_SHOWNORMAL}, \e{SW_SHOWMAXIMIZED}, \e{SW_SHOWMINIMIZED}, or an empty string.
-keyboard_shortcut should be in the form of 'flag|c' where flag can be a combination (using |) of: \e{ALT}, \e{CONTROL}, \e{EXT}, or \e{SHIFT}. c is the character to use (a-z, A-Z, 0-9, F1-F24, etc). Note that no spaces are allowed in this string. A good example is "ALT|CONTROL|F8". $OUTDIR is used for the working directory. You can change it by using \R{setoutpath}{SetOutPath} before creating the Shortcut.
+keyboard_shortcut should be in the form of 'flag|c' where flag can be a combination (using |) of: \e{ALT}, \e{CONTROL}, \e{EXT}, or \e{SHIFT}. c is the character to use (a-z, A-Z, 0-9, F1-F24, etc). Note that no spaces are allowed in this string. A good example is "ALT|CONTROL|F8". $OUTDIR is stored as the shortcut's working directory property. You can change it by using \R{setoutpath}{SetOutPath} before creating the shortcut or use /NoWorkingDir if you don't need to set the working directory property.
 description should be the description of the shortcut, or comment as it is called under XP.
 The error flag is set if the shortcut cannot be created (i.e. either of the paths (link or target) does not exist, or some other error).
 
 \c CreateDirectory "$SMPROGRAMS\My Company"
-\c CreateShortCut "$SMPROGRAMS\My Company\My Program.lnk" "$INSTDIR\My Program.exe" \
+\c CreateShortcut "$SMPROGRAMS\My Company\My Program.lnk" "$INSTDIR\My Program.exe" \
 \c   "some command line parameters" "$INSTDIR\My Program.exe" 2 SW_SHOWNORMAL \
 \c   ALT|CONTROL|SHIFT|F5 "a description"
 
@@ -66,25 +67,25 @@ Gets the version information from the DLL (or any other executable containing ve
 
 \c localfilename user_var(high dword output) user_var(low dword output)
 
-This is similar to GetDLLVersion, only it acts on the system building the installer (it actually compiles into two StrCpy commands). Sets the two output variables with the DLL version information of the DLL on the build system.
+This is similar to \R{getdllversion}{GetDLLVersion}, only it acts on the system building the installer (it actually compiles into two \R{StrCpy}{StrCpy} commands). Sets the two output variables with the DLL version information of the DLL on the build system. Use \R{ppgetdllversion}{!getdllversion} if you need to use the values with \R{viproductversion}{VIProductVersion}.
 
 \S2{getfiletime} GetFileTime
 
 \c filename user_var(high dword output) user_var(low dword output)
 
-Gets the last write time of "filename". Sets the user output variables with the high and low dwords of the timestamp on success; on failure the outputs are empty and the error flag is set.
+Gets the last write time of "filename". Sets the user output variables with the high and low dwords of the FILETIME timestamp on success; on failure the outputs are empty and the error flag is set.
 
 \S2{getfiletimelocal} GetFileTimeLocal
 
 \c localfilename user_var(high dword output) user_var(low dword output)
 
-This is similar to GetFileTime, only it acts on the system building the installer (it actually compiles into two StrCpy commands). Sets the two output variables with the file timestamp of the file on the build system.
+This is similar to \R{getfiletime}{GetFileTime}, only it acts on the system building the installer (it actually compiles into two \R{StrCpy}{StrCpy} commands). Sets the two output variables with the file timestamp of the file on the build system.
 
 \S2{getfullpathname} GetFullPathName
 
 \c [/SHORT] user_var(output) path_or_file
 
-Assign to the user variable $x, the full path of the file specified. If the path portion of the parameter is not found, the error flag will be set and $x will be empty. If /SHORT is specified, the path is converted to the short filename form. However, if /SHORT is not specified, the path isn't converted to its long filename form. To get the long filename, call GetLongPathName using the System plug-in. Note that GetLongPathName is only available on Windows 98, Windows 2000 and above.
+Assign the full path of the file specified to user variable $x. If the path portion of the parameter is not found, the error flag will be set and $x will be empty. If /SHORT is specified, the path is converted to the short filename form. However, if /SHORT is not specified, the path isn't converted to its long filename form. To get the long filename, call GetLongPathName using the System plug-in. Note that GetLongPathName is only available on Windows 98, Windows 2000 and above.
 
 \c StrCpy $INSTDIR $PROGRAMFILES\NSIS
 \c SetOutPath $INSTDIR
@@ -101,9 +102,9 @@ Assign to the user variable $x, the full path of the file specified. If the path
 
 \S2{gettempfilename} GetTempFileName
 
-\c user_var(output) base_dir
+\c user_var(output) [base_dir]
 
-Assign to the user variable $x, the name of a temporary file. The file will have been created, so you can then overwrite it with what you please. The name of the temporary file is guaranteed to be unique. If to want the temporary file to be created in another directory than the Windows temp directory, specify a base_dir. Delete the file when done with it.
+Assign to the user variable $x, the name of a temporary file. The file will be created for you and it will be empty. The name of the temporary file is guaranteed to be unique. If to want the temporary file to be created in another directory other than the Windows temp directory, specify a base_dir. You should \R{delete}{Delete} the file when you are done with it.
 
 \c GetTempFileName $0
 \c File /oname=$0 something.dat
@@ -114,7 +115,7 @@ Assign to the user variable $x, the name of a temporary file. The file will have
 
 \c user_var(output) filename
 
-Assign to the user variable $x, the full path of the file named by the second parameter. The error flag will be set and $x will be empty if the file cannot be found. Uses SearchPath() to search the system paths for the file.
+Assign to the user variable $x, the full path of the file named by the second parameter. The error flag will be set and $x will be empty if the file cannot be found. Uses \W{http://msdn.microsoft.com/en-us/library/aa365527}{SearchPath()} to search the system paths for the file.
 
 \S2{setfileattributes} SetFileAttributes
 

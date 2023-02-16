@@ -4,7 +4,7 @@
  * This file is a part of LZMA compression module for NSIS.
  * 
  * Original LZMA SDK Copyright (C) 1999-2006 Igor Pavlov
- * Modifications Copyright (C) 2003-2006 Amir Szekely <kichik@netvision.net.il>
+ * Modifications Copyright (C) 2003-2019 Amir Szekely <kichik@netvision.net.il>
  * 
  * Licensed under the Common Public License version 1.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,13 +47,13 @@ inline bool operator==(REFGUID g1, REFGUID g2)
 inline bool operator!=(REFGUID g1, REFGUID g2) { return !(g1 == g2); }
 #endif
 
+#endif // GUID_DEFINED
+
 #ifdef __cplusplus
   #define MY_EXTERN_C extern "C"
 #else
   #define MY_EXTERN_C extern
 #endif
-
-#endif // GUID_DEFINED
 
 
 #ifdef DEFINE_GUID

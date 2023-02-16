@@ -1,19 +1,28 @@
-\title NSIS Users Manual
+\#{**********************************************}
+\#{* Common config shared by all output formats *}
+\#{**********************************************}
 
-\cfg{xhtml-leaf-level}{1}
+\define{NsisCopyright} Copyright (C) 1999-2019 Contributors
 
-\cfg{xhtml-leaf-smallest-contents}{3}
-
-\cfg{xhtml-leaf-contains-contents}{true}
-
-\cfg{xhtml-contents-depth-0}{3}
-
-\cfg{xhtml-head-end}{<link rel="stylesheet" href="style.css" type='text/css' />}
-
-\preamble NSIS is a free scriptable win32 installer/uninstaller system that doesn't suck and isn't huge.
+\copyright \NsisCopyright
 
 \preamble Check \W{http://nsis.sourceforge.net/}{http://nsis.sf.net} for news, information, support, examples, tutorials and more.
 
 \preamble Quick links:\\<br\\>\W{http://nsis.sourceforge.net/support/faq/}{FAQ} - A list of frequently asked questions\\<br\\>\W{http://nsis.sourceforge.net/wiki/}{NSIS Wiki} - Examples, functions, tutorials, plug-ins, software and more\\<br\\>\W{http://forums.winamp.com/forumdisplay.php?forumid=65}{Forum} - Post questions or discuss NSIS features
 
-\copyright Copyright (C) 1999-2009 Contributors
+\define{NsisFuncReqU} This function is only available when building a \R{intro-unicode}{Unicode installer}.
+
+\define{NsisFuncReq64} This function is only available when building a 64-bit installer.
+
+\define{NsisACPcp} system default ANSI codepage (ACP)
+
+\define{NsisInputCharset} ACP|OEM|CP#|UTF8|UTF16<LE|BE>
+
+\define{NsisOutputCharset} ACP|OEM|CP#|UTF8[SIG]|UTF16<LE|BE>[BOM]
+
+\define{NsisWarnBlockContainerBegin} \\<div class=\\"wb\\"\\>
+
+\define{NsisWarnBlockContainerEnd} \\</div\\>
+
+\define{NsisBlockHeaderExeheadU} \\<b\\>Unicode: \\</b\\>
+

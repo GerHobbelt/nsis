@@ -11,11 +11,12 @@ NSIS
 
 EXAMPLES
 
-* Write an advanced paging example showing multiple components page with multiple
-  instfiles pages
+* Write an advanced paging example showing multiple components page with
+  multiple instfiles pages
 
 PLUG-INS
 
-* InstallOptions - custom class names so you can include whatever control you want
+* InstallOptions - custom class names so you can include any control
+  you want
 
 * nsExec - live outputs

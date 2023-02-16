@@ -2,7 +2,6 @@ target = 'System'
 
 files = Split("""
 	Source/Buffers.c
-	Source/Call.S
 	Source/Plugin.c
 	Source/System.c
 """)
@@ -25,7 +24,34 @@ docs = Split("""
 	WhatsNew.txt
 """)
 
-Import('BuildPlugin')
+Import('BuildPlugin env')
+
+defs = ['SYSTEM_EXPORTS']
+msvc = 'msvc' in env['TOOLS'] or 'mstoolkit' in env['TOOLS']
+
+srcsuff = ''
+if env['TARGET_ARCH'] != 'x86':
+	srcsuff = '-' + env['TARGET_ARCH']
+	defs += ['SYSTEM_NOCALLBACKS'] # BUGBUG: Remove this when CallBack() is implemented
+filename = 'Call' + srcsuff
+
+src_ascpp = """
+	#if 0 /* a C style comment */
+	ERROR: assembler-with-cpp required!
+	#else
+	.end
+	#endif
+"""
+conf = env.Configure()
+if conf.TryCompile('END', '.S'):
+	files += ['Source/'+filename+'.S']
+elif (not msvc) and conf.TryCompile(src_ascpp, '.S'):
+	files += ['Source/'+filename+'CPP.S']
+elif (not msvc) and conf.TryCompile(src_ascpp, '.sx'):
+	files += ['Source/'+filename+'CPP.sx']
+else:
+	print('WARNING: System.dll: unable to find assembler for '+filename+'.S')
+conf.Finish()
 
 BuildPlugin(
 	target,
@@ -34,10 +60,8 @@ BuildPlugin(
 	examples,
 	docs,
 	nodeflib = False,
-	defines = ['SYSTEM_EXPORTS']
+	defines = defs
 )
-
-Import('env')
 
 res = 'Resource/Resource.rc'
 res_obj = 'Resource/Resource-rc.o'

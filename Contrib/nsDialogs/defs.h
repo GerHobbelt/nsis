@@ -1,9 +1,16 @@
+// Unicode support by Jim Park -- 08/24/2007
+
 #ifndef __NS_DIALOGS__DEFS_H__
 #define __NS_DIALOGS__DEFS_H__
 
 #include <windows.h>
 
-#define NSDFUNC __stdcall
+#define NSDFUNC WINAPI
+
+#define GetVar(vars, varlen, varid) ( (vars) + ((varid) * (varlen)) )
+#define DlgRet(hDlg, val) ( SetWindowLongPtr((hDlg), DWLP_MSGRESULT, (val)) | TRUE )
+#define StrToIntPtr nsishelper_str_to_ptr
+
 
 typedef int nsFunction;
 
@@ -43,7 +50,7 @@ struct nsControl
 {
   HWND window;
   enum nsControlType type;
-  char userData[USERDATA_SIZE];
+  TCHAR userData[USERDATA_SIZE];
   struct nsControlCallbacks callbacks;
   WNDPROC oldWndProc;
 };
@@ -64,6 +71,6 @@ struct nsDialog
   struct nsControl* controls;
 };
 
-#define NSCONTROL_ID_PROP "NSIS: nsControl pointer property"
+#define NSCONTROL_ID_PROP _T("NSIS: nsControl pointer property")
 
 #endif//__NS_DIALOGS__DEFS_H__

@@ -20,7 +20,7 @@
 #        System::Alloc 156
 #        Pop $0
 #        System::Call *$0(ir1)
-#        System::Call kernel32::GetVersionEx(ir0)i.R0
+#        System::Call kernel32::GetVersionEx(pr0)i.R0
 #
 #        DetailPrint 'StrCpy $2_RES $R0'
 #
@@ -108,7 +108,7 @@ Var OSVERSIONINFOEX_INIT
 
 !macro __WinVer_Call_GetVersionEx STRUCT_SIZE
 
-	!if ${STRUCT_SIZE} == ${OSVERSIONINFOA_SIZE}
+	!if ${STRUCT_SIZE} == ${OSVERSIONINFO_SIZE}
 
 		StrCpy $3 $OSVERSIONINFO_RES
 		Push $OSVERSIONINFO_CSD
@@ -116,7 +116,7 @@ Var OSVERSIONINFOEX_INIT
 
 	!endif
 
-	!if ${STRUCT_SIZE} == ${OSVERSIONINFOEXA_SIZE}
+	!if ${STRUCT_SIZE} == ${OSVERSIONINFOEX_SIZE}
 
 		StrCpy $3 $OSVERSIONINFOEX_RES
 		Push $OSVERSIONINFOEX_CSD

@@ -3,7 +3,7 @@
  * 
  * This file is a part of NSIS.
  * 
- * Copyright (C) 1999-2009 Nullsoft and Contributors
+ * Copyright (C) 1999-2019 Nullsoft and Contributors
  * 
  * Licensed under the zlib/libpng license (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,9 @@
  * 
  * This software is provided 'as-is', without any express or implied
  * warranty.
+ *
+ *
+ * Reviewed for Unicode support by Jim Park -- 08/22/2007
  */
 
 #ifndef ___COMPONENTS_H___

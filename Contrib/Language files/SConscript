@@ -2,6 +2,7 @@ languages = Split("""
 	Albanian
 	Afrikaans
 	Arabic
+	Armenian
 	Asturian
 	Basque
 	Belarusian
@@ -9,6 +10,7 @@ languages = Split("""
 	Breton
 	Bulgarian
 	Catalan
+	Corsican
 	Croatian
 	Czech
 	Danish
@@ -20,9 +22,11 @@ languages = Split("""
 	Finnish
 	French
 	Galician
+	Georgian
 	German
 	Greek
 	Hebrew
+	Hindi
 	Hungarian
 	Icelandic
 	Indonesian
@@ -39,11 +43,13 @@ languages = Split("""
 	Mongolian
 	Norwegian
 	NorwegianNynorsk
+	Pashto
 	Polish
 	Portuguese
 	PortugueseBR
 	Romanian
 	Russian
+	ScotsGaelic
 	Serbian
 	SerbianLatin
 	SimpChinese
@@ -52,6 +58,7 @@ languages = Split("""
 	Spanish
 	SpanishInternational
 	Swedish
+	Tatar
 	Thai
 	TradChinese
 	Turkish

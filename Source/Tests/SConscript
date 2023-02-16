@@ -17,6 +17,7 @@ required = Split("""
 	dirreader.cpp
 	growbuf.cpp
 	mmap.cpp
+	BinInterop.cpp
 	ResourceEditor.cpp
 	util.cpp
 	winchar.cpp
@@ -72,6 +73,7 @@ extralibs = Split("""
 	iconv
 	pthread
 	user32
+	oleaut32
 """)
 
 scripts = Split("""
@@ -157,7 +159,7 @@ else:
 	
 	# no CppUnit
 	def err(target, source, env):
-		print '*** error: CppUnit must be installed for testing!'
+		print('*** error: CppUnit must be installed for testing!')
 		return 1
 
 	cmd = env.Command(target, [tests], Action(err, ''))

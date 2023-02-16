@@ -1,5 +1,683 @@
 \A{history} Changelog and Release Notes
 
+\H{v3.05} 3.05
+
+Released on ? ?th, 201?
+
+\S1{v3.05-rl} Release Notes
+
+ANSI targets are deprecated, consider moving to Unicode.
+
+\S1{v3.05-cl} Changelog
+
+\S2{} Minor Changes
+
+\b Added \R{apeaddresource}{PEAddResource} and \R{aperemoveresource}{PERemoveResource}
+
+\b Added \R{loadandsetimage}{LoadAndSetImage}
+
+\# Undocumented: \b Added ManifestMaxVersionTested
+
+\b Added experimental \R{amanifestlongpathaware}{ManifestLongPathAware} attribute
+
+\b Allow quoted library path in System::Call (\W{http://sf.net/p/nsis/bugs/546}{bug #546} and \W{http://sf.net/p/nsis/bugs/1225}{bug #1225})
+
+\b %1 in !finalize command can be specified multiple times
+
+\b Fixed -O stderr stream issue (\W{http://sf.net/p/nsis/bugs/1221}{bug #1221})
+
+\b Fixed InstallLib .NSI space-in-path bug (\W{http://sf.net/p/nsis/bugs/1222}{bug #1222})
+
+\b StrFunc.nsh now supports a "using" idiom to help with forward-declaration of functions (\W{http://sf.net/p/nsis/bugs/1229}{bug #1229})
+
+\b Zero uninitialized data in icon group (\W{http://sf.net/p/nsis/bugs/1230}{bug #1230})
+
+\S2{} Translations
+
+\b Updated Hindi (\W{http://sf.net/p/nsis/patches/291}{patch #291}) and Portuguese (\W{http://sf.net/p/nsis/bugs/1219}{bug #1219})
+
+\H{v3.04} 3.04
+
+Released on December 15th, 2018
+
+\S1{v3.04-cl} Changelog
+
+\S2{} Major Changes
+
+\b Added IsNativeMachineArchitecture helper macros to x64.nsh
+
+\b Added experimental WinVer "Windows as a Service" detection macros
+
+\b Added MakeNSISW window info "spy" tool
+
+\S2{} Minor Changes
+
+\b Added MUI_TEXTCOLOR setting
+
+\b nsDialogs::OnNotify can now return values back to Windows
+
+\b Added LIBRARY_INSTALL_EQUAL_VERSION \R{library_install}{InstallLib} option
+
+\b Added NTMARTA to preload list to fix rare Windows 7 security issue (\W{http://sf.net/p/nsis/bugs/1204}{bug #1204})
+
+\b AddBrandingImage now supports dialog units
+
+\# Undocumented: \b Added ManifestDisableWindowFiltering and ManifestGdiScaling
+
+\b Fixed !macroundef of last defined macro bug
+
+\b Fixed MultiUser caption string bug (\W{http://sf.net/p/nsis/bugs/1012}{bug #1012})
+
+\b !undef issues warnings instead of errors
+
+\b MakeNSIS prints -CMDHELP to stdout (\W{http://sf.net/p/nsis/bugs/1203}{bug #1203})
+
+\b Removed LibraryLocal utility
+
+\S2{} Translations
+
+\b Added Hind\u012b{i} (\W{http://sf.net/p/nsis/patches/289}{patch #289})
+
+\b Updated Belarusian, German (\W{http://sf.net/p/nsis/bugs/1023}{bug #1023}), Mongolian and Spanish (\W{http://sf.net/p/nsis/bugs/1205}{bug #1205})
+
+\H{v3.03} 3.03
+
+Released on January 29th, 2018
+
+\S1{v3.03-rn} Release Notes
+
+\b Building NSIS with Python 2.6 or older is no longer supported
+
+\S1{v3.03-cl} Changelog
+
+\S2{} Major Changes
+
+\b Added more NSD controls and macros (\W{http://sf.net/p/nsis/feature-requests/543}{RFE #543})
+
+\b Added \R{ppgettlbversion}{!gettlbversion}
+
+\b \R{library}{Library} TLB and VxD version support on POSIX (\W{http://sf.net/p/nsis/patches/284}{patch #284})
+
+\S2{} Minor Changes
+
+\b Added System plug-in v2 syntax option
+
+\b Added System plug-in B and H types
+
+\b Added \R{intptrcmp}{IntPtrCmp}, IntPtrCmpU, and \R{intptrop}{IntPtrOp}
+
+\b Added Int64Cmp, Int64CmpU and Int64Fmt (64-bit only)
+
+\b Added IntOp and System::Int64Op >>> operator
+
+\b Added more !define /math operators
+
+\# Undocumented: \b Added ManifestDPIAwareness
+
+\b Added WinVer.nsh IsDomainController (\W{http://sf.net/p/nsis/patches/286}{patch #286})
+
+\b Plug-ins now set the ASLR, DEP, LAA, NOSEH and TS PE flags (\W{http://sf.net/p/nsis/bugs/1188}{bug #1188})
+
+\b MakeNSIS exits with code 0 for various information commands (\W{http://sf.net/p/nsis/bugs/1193}{bug #1193})
+
+\b Added error and warning states to !pragma warning
+
+\b Removed unused NSD_LB_Clear macro parameter
+
+\S2{} Translations
+
+\b Added Tatar (\W{http://sf.net/p/nsis/patches/281}{patch #281})
+
+\b Fixed and updated Scottish Gaelic (\W{http://sf.net/p/nsis/patches/285}{patch #285}, \W{http://sf.net/p/nsis/bugs/1197}{bug #1197})
+
+\b Updated Italian (\W{http://sf.net/p/nsis/bugs/1194}{bug #1194})
+
+\S2{} Build System
+
+\b Added support for Python 3
+
+\b Dropped support for Python 2.6 and older
+
+\H{v3.02.1} 3.02.1
+
+Released on July 31st, 2017
+
+\S1{v3.02.1-cl} Changelog
+
+\S2{} Translations
+
+\b Fixed Chinese (Traditional) and Romanian translation bugs (\W{http://sf.net/p/nsis/bugs/1189}{bug #1189} and \W{http://sf.net/p/nsis/bugs/1191}{bug #1191})
+
+\b Fixed Scots Gaelic MUI finish page translation
+
+\H{v3.02} 3.02
+
+Released on July 23rd, 2017
+
+\S1{v3.02-cl} Changelog
+
+\S2{} Major Changes
+
+\b Fixed NSIS3 RegTool Win9x bug
+
+\b Added the HKCR32, HKCR64, HKCU32, HKCU64, HKLM32 and HKLM64 root keys
+
+\b Unsupported \R{setregview}{SetRegView} mode now fails all registry operations
+
+\b Added \R{execshellwait}{ExecShellWait}
+
+\b Added \R{writeregmultistr}{WriteRegMultiStr} (\W{http://sf.net/p/nsis/feature-requests/382}{RFE #382}, \W{http://sf.net/p/nsis/patches/219}{patch #219}) and WriteRegNone
+
+\b Added \R{pragma}{!pragma warning} (\W{http://sf.net/p/nsis/patches/267}{patch #267})
+
+\b \R{varconstant}{$LocalAppData} now resolves to the ProgramData folder in the \R{setshellvarcontext}{SetShellVarContext all} context
+
+\S2{} Minor Changes
+
+\b Variables used in \R{acaption}{Caption} can now be set in \R{onguiinit}{.onGUIInit} (\W{http://sf.net/p/nsis/feature-requests/539}{RFE #539})
+
+\b \L{../Docs/MultiUser/Readme.html}{MultiUser} now supports \R{varconstant}{$ProgramFiles64} (\W{http://sf.net/p/nsis/bugs/843}{bug #843})
+
+\b Added support for MUI_UNCONFIRMPAGE_VARIABLE (\W{http://sf.net/p/nsis/feature-requests/511}{RFE #511}) and MUI_PAGE_CUSTOMFUNCTION_DESTROYED
+
+\b Unicode nsExec now supports the /OEM switch (\W{http://sf.net/p/nsis/bugs/1171}{bug #1171})
+
+\S2{} Translations
+
+\b Chinese (Traditional) updates by Walter Cheuk
+
+\b Minor French improvements (\W{http://sf.net/p/nsis/patches/221}{patch #221})
+
+\H{v3.01} 3.01
+
+Released on December 11th, 2016
+
+\S1{v3.01-cl} Changelog
+
+\S2{} Major Changes
+
+\b Error messages are now written to stderr by default
+
+\b New icons by Jan T. Sott
+
+\S2{} Minor Changes
+
+\b \R{setctlcolors}{SetCtlColors} now supports Windows color constant values
+
+\b StrCpy "" maxlen handling (\W{http://sf.net/p/nsis/bugs/1122}{bug #1122})
+
+\b Fixed buffer size bug in winchar.cpp (\W{http://sf.net/p/nsis/patches/271}{patch #271})
+
+\S2{} Translations
+
+\b Added Corsican (\W{http://sf.net/p/nsis/patches/268}{patch #268})
+
+\b PortugueseBR fixes (\W{http://sf.net/p/nsis/patches/276}{patch #276})
+
+\b Updated Danish translation (\W{http://sf.net/p/nsis/bugs/1164}{bug #1164})
+
+\b Arabic, Norwegian, Portuguese, Ukrainian and Swedish \L{../Docs/MultiUser/Readme.html}{MultiUser} fixes (\W{http://sf.net/p/nsis/patches/278}{patch #278}, \W{http://sf.net/p/nsis/patches/279}{patch #279}, \W{http://sf.net/p/nsis/patches/274}{patch #274}, \W{http://sf.net/p/nsis/patches/275}{patch #275} & \W{http://sf.net/p/nsis/patches/277}{patch #277})
+
+\H{v3.0} 3.0
+
+Released on July 24th, 2016
+
+\S1{v3.0-rl} Release Notes
+
+Long-awaited version 3 of NSIS is finally ready. It comes with optional \R{aunicodetarget}{Unicode} support, still works on all the same versions of Windows, supports Windows 10, and adds a lot of other small features and fixes. Huge thanks goes out to Anders and Wizou for making this happen and Jim Park for the original patch.
+
+\S1{v3.0-cl} Changelog
+
+\S2{} Minor Changes
+
+\b \R{finalize}{!finalize} command now supports the same compare operators as !system (\W{http://sf.net/p/nsis/bugs/1148}{bug #1148})
+
+\S2{} Translations
+
+\b PortugueseBR fixes (\W{http://sf.net/p/nsis/bugs/1149}{bug #1149})
+
+\H{v3.0rc2} 3.0 Release Candidate 2
+
+Released on July 8th, 2016
+
+\S1{v3.0rc2-cl} Changelog
+
+\S2{} Major Changes
+
+\b Fixed LogicLib nested $\{Select\} bug
+
+\b \R{makensis}{!makensis} command must force Unicode output to be UTF-8 (\W{http://sf.net/p/nsis/bugs/1147}{bug #1147})
+
+\S2{} Minor Changes
+
+\b Zip2Exe aborts if the zip file is encrypted (\W{http://sf.net/p/nsis/bugs/1141}{bug #1141})
+
+\b Added LogicLib & operator
+
+\b NSIS Menu POSIX fixes (\W{http://sf.net/p/nsis/bugs/1144}{bug #1144})
+
+\S2{} Translations
+
+\b PortugueseBR fixes (deguix)
+
+\b Minor tweaks to Danish.nlf (scootergrisen) (\W{http://sf.net/p/nsis/bugs/1140}{bug #1140})
+
+\H{v3.0rc1} 3.0 Release Candidate 1
+
+Released on April 3nd, 2016
+
+\S1{v3.0rc1-cl} Changelog
+
+\S2{} Major Changes
+
+\b Fixed \R{appendfile}{!appendfile} on POSIX and LogicLib $\{Switch\}
+
+\b More security hardening to prevent dll hijacking
+
+\S2{} Minor Changes
+
+\b Documentation improvements
+
+\b The name of the uninstaller created in %TEMP%\\~nsu.tmp has changed from %UNIQUE%u_.exe to Un_%UNIQUE%.exe
+
+\b Various warning and error improvments
+
+\S2{} Translations
+
+\b Added missing MULTIUSER_* entries to Japanese.nsh (\W{http://sf.net/p/nsis/patches/266}{patch #266})
+
+\H{v3.0b3} 3.0 Beta 3
+
+Released on December 26th, 2015
+
+\S1{v3.0b3-cl} Changelog
+
+\S2{} Major Changes
+
+\b \R{arequestexecutionlevel}{RequestExecutionLevel} now defaults to \c{admin}
+
+\b LoadLibrary security hardening to prevent dll hijacking (\W{http://sf.net/p/nsis/bugs/1125}{bug #1125})
+
+\b \R{FileReadUTF16LE}{FileReadUTF16LE} now skips the optional BOM at the start of a file
+
+\S2{} Minor Changes
+
+\b Fixed System plugin GUID type output bug on Win98
+
+\b \R{FileWriteUTF16LE}{FileWriteUTF16LE} can add a BOM with the /BOM switch
+
+\b \R{createshortcut}{CreateShortcut} icon index can now be larger than 255 (\W{http://sf.net/p/nsis/bugs/1123/}{bug #1123})
+
+\b \R{system}{!system} and \R{execute}{!execute} now provide an empty StdIn pipe to work around bugs in some Windows utilities
+
+\b Added support for 0o octal radix prefix on number literals in the preprocessor
+
+\b The single parameter version of \R{if}{!if} now also supports floats
+
+\b Preprocessor now warns when invalid floating point numbers are used in math operations
+
+\b MakeNSISW now uses WinInet when checking for updates
+
+\S2{} Translations
+
+\b Brazilian Portuguese updated (Felipe) (\W{http://sf.net/p/nsis/patches/263/}{patch #263})
+
+\b Polish updated (Pawe\u0142{l} Porwisz)
+
+\H{v3.0b2} 3.0 Beta 2
+
+Released on August 4th, 2015
+
+\S1{v3.0b2-cl} Changelog
+
+\S2{} Major Changes
+
+\b Preliminary Windows 10 support
+
+\S2{} Minor Changes
+
+\b Added !appendfile /RawNL switch
+
+\b Added PESubsysVer attribute
+
+\b Exec[Wait] sets the CREATE_DEFAULT_ERROR_MODE flag when creating a process
+
+\b Fixed 4+ TiB freespace calculation bug (\W{http://sf.net/p/nsis/bugs/1115/}{bug #1115})
+
+\b Fixed CreateShortcut /NoWorkingDir parsing bug (\W{http://sf.net/p/nsis/bugs/1110/}{bug #1110})
+
+\b Fixed minor issues in the Pascal NSIS plug-in SDK and removed the \cw{extrap} global variable
+
+\b nsDialogs and InstallOptions now use the system link color
+
+\S2{} Build System
+
+\b Linux stdcall warning fix (\W{http://sf.net/p/nsis/patches/261}{patch #261})
+
+\b Linux test-scripts fix (\W{http://sf.net/p/nsis/patches/260}{patch #260})
+
+\b Win64 fixes (including \W{http://sf.net/p/nsis/patches/258}{patch #258}, \W{http://sf.net/p/nsis/bugs/1105/}{bug #1105})
+
+\b Visual C 2012 fixes
+
+\H{v3.0b1} 3.0 Beta 1
+
+Released on October 6th, 2014
+
+\S1{v3.0b1-rl} Release Notes
+
+\b This release addresses a lot of build issues, reintroduces the \W{https://drone.io/github.com/kichik/nsis}{nightly builds} and adds automatic nightly test execution
+
+\S1{v3.0b1-cl} Changelog
+
+\S2{} Major Changes
+
+\b !insertmacro allows macro recursion (\W{http://sf.net/p/nsis/feature-requests/497}{RFE #497})
+
+\b Added \R{makensis}{!makensis} command
+
+\b Added new MUI2 bitmap stretch modes, *_NOSTRETCH is now deprecated (\W{http://sf.net/p/nsis/feature-requests/521}{RFE #521})
+
+\b \c{InitiateShutdown()} is used to reboot the machine if available (\W{http://sf.net/p/nsis/patches/247}{patch #247})
+
+\b Added PPO and SafePPO preprocess-only compiler switches
+
+\b MakeNSIS WM_COPYDATA messages now use the QH_OUTPUTCHARSET encoding with CP_ACP as the default for compatibility with old IDEs.
+
+\S2{} Minor Changes
+
+\b Added IsWow64 to x64.nsh
+
+\b Added PEDllCharacteristics attribute
+
+\b Added System::Call direct register memory access type. (\W{http://sf.net/p/nsis/patches/249}{patch #249})
+
+\b Added WX compiler switch
+
+\b Allow skipping ExDLL build with SKIPPLUGINS ((\W{http://sf.net/p/nsis/patches/254}{patch #254}))
+
+\b Changed default DllCharacteristics to TS_AWARE+NO_SEH+NX_COMPAT+DYNAMIC_BASE
+
+\b Fixed Mac OS X builds (\W{http://sf.net/p/nsis/patches/253}{patch #253} and \W{http://sf.net/p/nsis/bugs/1085}{bug #1085})
+
+\b Fixed POSIX !searchparse bug (\W{http://sf.net/p/nsis/patches/251}{patch #251})
+
+\b Fixed !macroundef
+
+\b Fixed test-code build target on POSIX and enabled it in nightly builds (\W{http://sf.net/p/nsis/bugs/1088/}{bug #1098})
+
+\b Fixed Visual Studio 2012 builds
+
+\S2{} Translations
+
+\b Added Armenian (Hrant Ohanyan)
+
+\H{v3.0b0} 3.0 Beta 0
+
+Released on May 11th, 2014
+
+\S1{v3.0b0-rl} Release Notes
+
+\b POSIX builds work again! Please let us know if your favorite platform is still having build issues. We mainly test on Linux.
+
+\S1{v3.0b0-cl} Changelog
+
+\S2{} Major Changes
+
+\b Basic AMD64 System::Call support
+
+\b Fixed POSIX builds
+
+\S2{} Minor Changes
+
+\b Added CreateShortcut /NoWorkingDir parameter
+
+\b Added Int<32|64|Ptr><Op|Cmp[U]> helper macros to Util.nsh
+
+\b Added P<, P<=, P=, P<>, P>= and P> LogicLib ptrdiff_t tests
+
+\b Try harder to find duplicate strings in string block (\W{http://sf.net/p/nsis/bugs/1088/}{bug #1088})
+
+\b !system will decode child output as OEMCP if GetConsoleOutputCP() == GetOEMCP()
+
+\b !system and !execute can store the exit code in a define
+
+\b !execute supports comparing the exit code with the same syntax as !system
+
+\b Preprocessor supports \cw{0n} and \cw{0b} radix prefix on number literals
+
+\H{v3.0a2} 3.0 Alpha 2
+
+Released on December 24th, 2013
+
+\S1{v3.0a2-rl} Release Notes
+
+It's the holiday gift you've been waiting for!
+
+\S2{} Known Issues
+
+\b The POSIX build is getting much closer, but still currently broken
+
+\b LangDLL doesn't display localized language name with \R{aunicodetarget}{Unicode} false
+
+\S1{v3.0a2-cl} Changelog
+
+\S2{} Major Changes
+
+\b !include defaults to UTF-8 after \cw{Unicode True}
+
+\b Preprocessor does not parse all branches and will not validate code that is never executed (\W{http://sf.net/p/nsis/bugs/1086/}{bug #1086})
+
+\S2{} Minor Changes
+
+\b FileRead in Unicode installers can handle DBCS, conversion output is limited to UCS-2.
+
+\b FileRead in Unicode installers now uses the Unicode replacement character (U+FFFD) for invalid characters and not '?'.
+
+\b FileReadByte no longer performs a Unicode conversion on non-ASCII characters
+
+\b Windows 8.1 & 2012R2 support in WinVer.nsh
+
+\b Fixed !define Unicode null terminator bug (\W{http://sf.net/p/nsis/bugs/1079/}{bug #1079})
+
+\b Unicode stubs create WCHAR richedit controls (\W{http://sf.net/p/nsis/bugs/1080/}{bug #1080})
+
+\b Fixed MakeNSISW default pushbutton and tab order
+
+\b Fixed incorrect page count in compiler statistics
+
+\H{v3.0a1} 3.0 Alpha 1
+
+Released on July 14th, 2013
+
+\S1{v3.0a1-rl} Release Notes
+
+\S2{} Known Issues
+
+\b The POSIX build is currently broken
+
+\b LangDLL doesn't display localized language name with \R{aunicodetarget}{Unicode} false
+
+\b \R{FileRead}{FileRead} may return '?' for MBCS letters with \R{aunicodetarget}{Unicode} true
+
+\S1{v3.0a1-cl} Changelog
+
+\S2{} Major Changes
+
+\b Default verbosity is /V3 without logo, MakeNSISW still uses /V4.
+
+\b \R{amanifestsupportedos}{ManifestSupportedOS} added support for the Windows 8.1 GUID and it is set by default to avoid GetVersionEx compatibility behavior.
+
+\S2{} Minor Changes
+
+\b Fixed !finalize %1
+
+\b Fixed !searchparse (\W{https://sourceforge.net/p/nsis/bugs/1073/}{bug #1073})
+
+\b Made installers always respect /S on command line, even when installer file can't be read (\W{https://sourceforge.net/p/nsis/bugs/1076/}{bug #1076})
+
+\b Minor MakeNSISW fixes and tweaks
+
+\b Added Zip2Exe Unicode checkbox
+
+\H{v3.0a0} 3.0 Alpha 0
+
+Released on May 19th, 2013
+
+\S1{v3.0a0-rl} Release Notes
+
+\b MakeNSIS can now generate ANSI and \R{intro-unicode}{Unicode} installers. Source files can be UTF8SIG, UTF16BOM or traditional MBCS text files (which are converted to Unicode with ACP unless you specify a different codepage). The default plugins are now stored in sub-folders based on their CPU target and character set encoding.
+
+\S2{} Known Issues
+
+\b The POSIX build is currently broken
+
+\b LangDLL doesn't display localized language name with \R{aunicodetarget}{Unicode} false
+
+\b \R{FileRead}{FileRead} may return '?' for MBCS letters with \R{aunicodetarget}{Unicode} true
+
+\S1{v3.0a0-cl} Changelog
+
+\S2{} Major Changes
+
+\b Added the \R{aunicodetarget}{Unicode} attribute (\W{http://sourceforge.net/support/tracker.php?aid=1238132}{RFE #1238132}, \W{http://sourceforge.net/support/tracker.php?aid=1795257}{patch #1795257})
+
+\b Added support for Windows 8 and Windows Server 2012
+
+\b MakeNSIS can read UTF8SIG and UTF16BOM script files (\W{http://sourceforge.net/support/tracker.php?aid=2026892}{RFE #2026892})
+
+\b All NLF and NSH language files are stored as UTF-16LE (\W{http://sourceforge.net/support/tracker.php?aid=1879642}{RFE #1879642})
+
+\b Scripts can control the SupportedOS list in the application manifest using \R{amanifestsupportedos}{ManifestSupportedOS} (\W{http://sourceforge.net/support/tracker.php?aid=2725883}{bug #2725883}, \W{http://sourceforge.net/support/tracker.php?aid=3020103}{RFE #3020103})
+
+\b Installers can claim DPI-awareness with \R{amanifestdpiaware}{ManifestDPIAware} (\W{http://sourceforge.net/support/tracker.php?aid=2897169}{bug #2897169})
+
+\b The index of the changed section is stored in $0 during .onSelChange callbacks (\W{http://sourceforge.net/support/tracker.php?aid=1634936}{RFE #1634936})
+
+\b $\{U+1\}...$\{U+10FFFF\} are treated as a Unicode character unless there is already a define with that name (\W{http://sourceforge.net/support/tracker.php?aid=2084797}{RFE #2084797})
+
+\S2{} Minor Changes
+
+\b Added \R{ppgetdllversion}{!getdllversion} (\W{http://sourceforge.net/support/tracker.php?aid=2809308}{bug #2809308})
+
+\b Added !appendfile /CHARSET parameter
+
+\b Added \R{if}{!if} support for /fileexists, case sensitive comparisons, hex and float
+
+\b Added more definitions to WinMessages.nsh
+
+\b %temp%\\Low will be used if the installer cannot write to %temp% nor %windir%\\Temp (\W{http://sourceforge.net/support/tracker.php?aid=2909242}{bug #2909242}, \W{http://sourceforge.net/support/tracker.php?aid=2912824}{patch #2912824})
+
+\b Added $\{NSIS_PACKEDVERSION\}, the NSIS version packed as a hex number (\W{http://sourceforge.net/support/tracker.php?aid=2680832}{patch #2680832})
+
+\b Added \R{prescopemacro}{$\{__MACRO__\}} and \R{precounter}{$\{__COUNTER__\}} predefines
+
+\b Added UnsafeStrCpy instruction, it can write to special variables like $PLUGINSDIR
+
+\b Added \R{vifileversion}{VIFileVersion}
+
+\b Added \R{finalize}{!finalize} for post-build commands (like signing the installer)
+
+\b Plugins in $\{NSISDIR\}\\Plugins have to be reserved with \c{ReserveFile /plugin}
+
+\b MakeNSIS /NOTIFYHWND uses a (optional) new event name to abort compilation, see build.cpp/h for details.
+
+\b Reduced !include/!insertmacro recursion stack usage (\W{http://sourceforge.net/support/tracker.php?aid=3067954}{bug #3067954})
+
+\b Fixed minor MakeNSIS leaks (\W{http://sourceforge.net/support/tracker.php?aid=3474662}{bug #3474662})
+
+\b Fixed MUI_FINISHPAGE_TITLE_3LINES padding when reboot is required (\W{http://sourceforge.net/support/tracker.php?aid=3400067}{bug #3400067}, \W{http://sourceforge.net/support/tracker.php?aid=3408407}{bug #3408407})
+
+\b Fixed removal of read only attribute even if Delete or RMDir fails (\W{http://sourceforge.net/support/tracker.php?aid=3072159}{bug #3072159})
+
+\b Fixed $\{__SECTION__\} in hidden sections (\W{http://sourceforge.net/support/tracker.php?aid=1787648}{RFE #1787648})
+
+\b Various documentation fixes (\W{http://sourceforge.net/support/tracker.php?aid=3063566}{bug #3063566}, \W{http://sourceforge.net/support/tracker.php?aid=3567313}{bug #3567313}, \W{http://sourceforge.net/support/tracker.php?aid=3307144}{patch #3307144})
+
+\b Lots of other small fixes...
+
+\S2{} Translations
+
+\b Changed LANGFILE macro in LangFile.nsh
+
+\b Warnings are now displayed for missing strings (LANGFILE_INCLUDE_WITHDEFAULT)
+
+\b Added Georgian (David Huriev)
+
+\b Added Pashto (Pakhtosoft)
+
+\b Added Scottish Gaelic (GunChleoc)
+
+\b Fixed Korean MUI_[UN]TEXT_FINISH_INFO_* (\W{http://sourceforge.net/support/tracker.php?aid=3541515}{bug #3541515})
+
+\H{v2.51} 2.51
+
+Released on April 1st, 2016
+
+\S1{v2.51-cl} Changelog
+
+\S2{} Minor Changes
+
+\b More security hardening to prevent dll hijacking
+
+\b Backported support for system 'p' type and logiclib P and Z tests
+
+\S2{} Translations
+
+\b Added missing MULTIUSER_* entries to Japanese.nsh (\W{http://sf.net/p/nsis/patches/266}{patch #266})
+
+\H{v2.50} 2.50
+
+Released on December 26th, 2015
+
+\S1{v2.50-cl} Changelog
+
+\S2{} Major Changes
+
+\b \R{arequestexecutionlevel}{RequestExecutionLevel} now defaults to \c{admin}
+
+\S2{} Minor Changes
+
+\b Preload certain system libraries to prevent dll hijacking (\W{http://sf.net/p/nsis/bugs/1125}{bug #1125})
+
+\H{v2.49} 2.49
+
+Released on December 16th, 2015
+
+\S1{v2.49-cl} Changelog
+
+\b Fixed CreateShortcut failure on Vista caused by security changes in 2.47
+
+\H{v2.48} 2.48
+
+Released on December 10th, 2015
+
+\S1{v2.48-cl} Changelog
+
+\b Fixed CHM (\W{http://sf.net/p/nsis/bugs/1129/}{bug #1129})
+
+\H{v2.47} 2.47
+
+Released on December 8th, 2015
+
+\S1{v2.47-rl} Release Notes
+
+\b This is a maintenance and security release
+
+\S1{v2.47-cl} Changelog
+
+\S2{} Major Changes
+
+\b LoadLibrary security hardening to prevent dll hijacking (\W{http://sf.net/p/nsis/bugs/1125}{bug #1125})
+
+\b \c{InitiateShutdown()} is used to reboot the machine if available (\W{http://sf.net/p/nsis/patches/247}{patch #247})
+
+\S2{} Minor Changes
+
+\b Fixed 4+ TiB freespace calculation bug (\W{http://sf.net/p/nsis/bugs/1115/}{bug #1115})
+
+\b Windows 8 & 2012 support in WinVer.nsh
+
 \H{v2.46} 2.46
 
 Released on December 6th, 2009
@@ -34,13 +712,13 @@ Released on June 6th, 2009
 
 \S1{v2.45-rl} Release Notes
 
-\b Support for Microsoft's upcoming release of Windows 7 has been added based on RC1 testing and documentation. Please report any related issues and don't forget to use \R{requestexecutionlevel}{RequestExecutionLevel}.
+\b Support for Microsoft's upcoming release of Windows 7 has been added based on RC1 testing and documentation. Please report any related issues and don't forget to use \R{arequestexecutionlevel}{RequestExecutionLevel}.
 
 \S1{v2.45-cl} Changelog
 
 \S2{} Major Changes
 
-\b Added support for Windows 7 installers - use \R{requestexecutionlevel}{RequestExecutionLevel}, just like with Vista (\W{http://sourceforge.net/support/tracker.php?aid=2725883}{bug #2725883})
+\b Added support for Windows 7 installers - use \R{arequestexecutionlevel}{RequestExecutionLevel}, just like with Vista (\W{http://sourceforge.net/support/tracker.php?aid=2725883}{bug #2725883})
 
 \b Added WinVer.nsh Windows 7 and Windows 2008 R2 support
 
@@ -50,7 +728,7 @@ Released on June 6th, 2009
 
 \S2{} Minor Changes
 
-\b Added wildcard and /nonfatal suppport for \R{delfile}{!delfile} (\W{http://sourceforge.net/support/tracker.php?aid=1505425}{RFE #1505425})
+\b Added wildcard and /nonfatal support for \R{delfile}{!delfile} (\W{http://sourceforge.net/support/tracker.php?aid=1505425}{RFE #1505425})
 
 \b Fixed \R{searchparse}{!searchparse} (\W{http://sourceforge.net/support/tracker.php?aid=2680110}{bug #2680110})
 
@@ -186,7 +864,7 @@ Released on December 20th, 2008
 
 \b \L{../Docs/nsDialogs/Readme.html}{nsDialogs}: Added progress bar support
 
-\b \L{../Include/WinVer.nsh}{WinVer.nsh}: Added IsServer, IsWin2003R2, IsStarterEdition, OSHasMediaCenter and OSHasTabletSupport (patch by Anders)
+\b \L{../Include/WinVer.nsh}{WinVer.nsh}: Added IsServer, IsWin2003R2, IsStarterEdition, OSHasMediaCenter and OSHasTabletSupport
 
 \b \L{../Include/WinVer.nsh}{WinVer.nsh}: Fixed 95/NT4 ambiguity (\W{http://sourceforge.net/support/tracker.php?aid=2053642}{bug #2053642})
 
@@ -784,7 +1462,7 @@ Released on June 8th, 2007
 
 \S2{} Major Changes
 
-\b Added a workaround for a Windows 2000 bug that caused infinite loops when hitting a key in the instilfes page (\W{http://sourceforge.net/support/tracker.php?aid=1733692}{bug #1733692})
+\b Added a workaround for a Windows 2000 bug that caused infinite loops when hitting a key on the instfiles page (\W{http://sourceforge.net/support/tracker.php?aid=1733692}{bug #1733692})
 
 \S2{} Minor Changes
 
@@ -832,7 +1510,7 @@ Released on May 5th, 2007
 
 \b Disable the X button on InstallOptions pages when CancelEnabled is 0
 
-\b Fixed incomplete MessageBox usage line (\W{http://sourceforge.net/support/tracker.php?aid=1709460}{bug #1709460})
+\b Fixed incomplete \R{messagebox}{MessageBox} usage line (\W{http://sourceforge.net/support/tracker.php?aid=1709460}{bug #1709460})
 
 \S2{} Build System
 
@@ -862,7 +1540,7 @@ Released on April 27th, 2007
 
 \b Added LIBRARY_IGNORE_VERSION option for \R{library_install}{InstallLib} (\W{http://sourceforge.net/support/tracker.php?aid=1699435}{patch #1699435})
 
-\b Added VXD support for \R{getdllversionlocal}{GetDLLVersionLocal} on Windows NT/2000/XP/Vista (\W{http://sourceforge.net/support/tracker.php?aid=1706624}{patch #1706624})
+\b Added VXD support for \R{getdllversionlocal}{GetDLLVersionLocal} on Windows NT4/2000/XP/Vista (\W{http://sourceforge.net/support/tracker.php?aid=1706624}{patch #1706624})
 
 \b Avoid \R{library}{Library} warning when UnInstallLib is unused (\W{http://sourceforge.net/support/tracker.php?aid=1692761}{bug #1692761})
 
@@ -1098,7 +1776,7 @@ Released on November 27th, 2006
 
 \b Fixed \L{../Include/WinVer.nsh}{WinVer.nsh}'s detection of Windows 98 and ME (reported on the \W{http://forums.winamp.com/showthread.php?s=&threadid=257994&highlight=winver.nsh}{forum})
 
-\b Fixed WriteUninstaller failure to overwrite read-only uninstallers (\W{http://sourceforge.net/support/tracker.php?aid=1542530}{bug #1542530})
+\b Fixed \R{writeuninstaller}{WriteUninstaller} failure to overwrite read-only uninstallers (\W{http://sourceforge.net/support/tracker.php?aid=1542530}{bug #1542530})
 
 \b Licensed lzma under \R{cpl-license}{CPL} with a \R{lzma-special-exception}{special exception}, instead of LGPL
 
@@ -1108,7 +1786,7 @@ Released on November 27th, 2006
 
 \S2{} New/Changed Commands
 
-\b Added `highest` option for \R{requestexecutionlevel}{RequestExecutionLevel}
+\b Added `highest` option for \R{arequestexecutionlevel}{RequestExecutionLevel}
 
 \S2{} Translations
 
@@ -1122,7 +1800,7 @@ Released on November 27th, 2006
 
 \S2{} Build System
 
-\b Added \W{http://msdn.microsoft.com/vstudio/express/visualc/}{Microsoft Visual C++ 2005 Express} support
+\b Added \W{https://web.archive.org/web/20060203051838/http://msdn.microsoft.com:80/vstudio/express/visualc/}{Microsoft Visual C++ 2005 Express} support
 
 \b SCons requirement upgraded to 0.96.93
 
@@ -1152,7 +1830,7 @@ Released on October 20th, 2006
 
 \S2{} New/Changed Commands
 
-\b Added \R{requestexecutionlevel}{RequestExecutionLevel} (\W{http://sourceforge.net/support/tracker.php?aid=1524709}{RFE #1524709})
+\b Added \R{arequestexecutionlevel}{RequestExecutionLevel} (\W{http://sourceforge.net/support/tracker.php?aid=1524709}{RFE #1524709})
 
 \S2{} Translations
 
@@ -1296,7 +1974,7 @@ Released on May 19th, 2006
 
 \b Fixed possible stack corruption when using TypeLib.dll on an invalid TLB
 
-\b Fixed RMDir deletion failure of read-only folders (\W{http://sourceforge.net/support/tracker.php?aid=1481664}{bug #1481664})
+\b Fixed \R{rmdir}{RMDir} deletion failure of read-only folders (\W{http://sourceforge.net/support/tracker.php?aid=1481664}{bug #1481664})
 
 \b \L{../Docs/makensisw/Readme.txt}{MakeNSISW}: Fixed toolbar compressor selection menu, broken in the previous version (\W{http://sourceforge.net/support/tracker.php?aid=1466486}{bug #1466486})
 
@@ -1362,7 +2040,7 @@ Released on April 7th, 2006
 
 \b Fixed makensis self-path detection on non-Windows platforms (NSIS_CONFIG_CONST_DATA_PATH=no)
 
-\b Fixed replace_icon and and generate_uninstall_icon_data icon validation
+\b Fixed replace_icon and generate_uninstall_icon_data icon validation
 
 \b Made external CHM links safer to script exceptions (\W{http://sourceforge.net/support/tracker.php?aid=1449879}{bug #1449879})
 
@@ -1438,7 +2116,7 @@ Released on March 4th, 2006
 
 \b More informative \R{aicon}{Icon} error messages (\W{http://sourceforge.net/support/tracker.php?aid=1174742}{bug #1174742})
 
-\b New case sesnsitive functions in headers: \R{wordfinds}{WordFindS}, \R{wordfind2xs}{WordFind2XS}, \R{wordfind3xs}{WordFind3XS}, \R{wordreplaces}{WordReplaceS}, \R{wordadds}{WordAddS}, \R{wordinserts}{WordInsertS}, \R{strfilters}{StrFilterS}, \R{textcompares}{TextCompareS}, \R{configreads}{ConfigReadS}, \R{configwrites}{ConfigWriteS}, \R{getoptionss}{GetOptionsS}
+\b New case-sensitive functions in headers: \R{wordfinds}{WordFindS}, \R{wordfind2xs}{WordFind2XS}, \R{wordfind3xs}{WordFind3XS}, \R{wordreplaces}{WordReplaceS}, \R{wordadds}{WordAddS}, \R{wordinserts}{WordInsertS}, \R{strfilters}{StrFilterS}, \R{textcompares}{TextCompareS}, \R{configreads}{ConfigReadS}, \R{configwrites}{ConfigWriteS}, \R{getoptionss}{GetOptionsS}
 
 \S2{} Translations
 
@@ -1448,7 +2126,7 @@ Released on March 4th, 2006
 
 \b Bulgarian translation improvements
 
-\b Fixed Czech grammer mistakes (\W{http://sourceforge.net/support/tracker.php?aid=1427189}{patch #1427189})
+\b Fixed Czech grammar mistakes (\W{http://sourceforge.net/support/tracker.php?aid=1427189}{patch #1427189})
 
 \b Fixed Italian typo (\W{http://sourceforge.net/support/tracker.php?aid=1416988}{patch #1416988})
 
@@ -1478,7 +2156,7 @@ Released on January 24th, 2006
 
 \S2{} Major Changes
 
-\b Fixed a bug that corrupted $TEMP under Windows 9x and NT and caused InitPluginsDir to fail (\W{http://sourceforge.net/support/tracker.php?aid=1412159}{bug #1412159})
+\b Fixed a bug that corrupted $TEMP under Windows 9x and NT and caused \R{initpluginsdir}{InitPluginsDir} to fail (\W{http://sourceforge.net/support/tracker.php?aid=1412159}{bug #1412159})
 
 \S2{} Minor Changes
 
@@ -1490,7 +2168,7 @@ Released on January 21st, 2006
 
 \S1{v2.13-rn} Release Notes
 
-\b Language detection has changed. The default language is now set to the user's user-interface language instead of the locale language, as suggested by \W{http://msdn.microsoft.com/library/default.asp?url=/library/en-us/intl/nls_0xrn.asp}{MSDN}. To restore the old behavior, use \c{System::Call "kernel32::GetUserDefaultLangID()i.a"} in \R{oninit}{.onInit}.
+\b Language detection has changed. The default language is now set to the user's user-interface language instead of the locale language, as suggested by \W{http://web.archive.org/web/20050913082611/http://msdn.microsoft.com/library/en-us/intl/nls_0xrn.asp}{MSDN}. To restore the old behavior, use \c{System::Call "kernel32::GetUserDefaultLangID()i.a"} in \R{oninit}{.onInit}.
 
 \S1{v2.13-cl} Changelog
 
@@ -1925,7 +2603,7 @@ Released on March 19th, 2005
 
 \b Added MB_RTLREADING style to \R{messagebox}{MessageBox} (\W{http://sourceforge.net/support/tracker.php?aid=1159701}{RFE #1159701})
 
-\b All registry instructions now accept SHCTX which is replaced with HKLM or HKCU on runtime according to \R{setshellvarcontext}{SetShellVarContext} (\W{http://sourceforge.net/support/tracker.php?aid=1124901}{RFE #1124901})
+\b All registry instructions now accept SHCTX which is replaced with HKLM or HKCU at runtime according to \R{setshellvarcontext}{SetShellVarContext} (\W{http://sourceforge.net/support/tracker.php?aid=1124901}{RFE #1124901})
 
 \S2{} Minor Changes
 
@@ -1939,7 +2617,7 @@ Released on March 19th, 2005
 
 \b Fixed a bug in the Russian language file distributed with 2.05
 
-\b Fixed a bug that caused SetFont to not function properly with RTL languages on Windows 9x (\W{http://sourceforge.net/support/tracker.php?aid=1159700}{bug #1159700})
+\b Fixed a bug that caused \R{asetfont}{SetFont} to not function properly with RTL languages on Windows 9x (\W{http://sourceforge.net/support/tracker.php?aid=1159700}{bug #1159700})
 
 \b Fixed a bug, introduced in 2.05, that caused problems with \R{ainsttype}{InstType} /COMPONENTSONLYONCUSTOM (\W{http://sourceforge.net/support/tracker.php?aid=1155060}{bug #1155060})
 
@@ -2059,7 +2737,7 @@ Released on December 3rd, 2004
 
 \b Fixed handling of absolute paths on POSIX
 
-\b Made RegDLL load and unload a DLL exactly once to fix crashes with COM DLLs registration
+\b Made \R{regdll}{RegDLL} load and unload a DLL exactly once to fix crashes with COM DLLs registration
 
 \S2{} New/Changed Commands
 
@@ -2107,7 +2785,7 @@ Released on October 23rd, 2004
 
 \b Made the datablock optimizer much faster
 
-\b Made the installer deny reboots while running (\W{http://msdn.microsoft.com/library/en-us/sysinfo/base/wm_queryendsession.asp}{WM_QUERYENDSESSION})
+\b Made the installer deny reboots while running (\W{http://msdn.microsoft.com/en-us/library/aa376890}{WM_QUERYENDSESSION})
 
 \b Made the \R{reboot}{Reboot} command first quit and then reboot so everything is always cleaned-up
 
@@ -2125,11 +2803,11 @@ Released on October 23rd, 2004
 
 \b Added Albanian language files
 
-\b Added NSIS_CONFIG_COMPONENTPAGE_ALTERNATIVE configuration option which makes components only be toggled when the user clicks on the checkbox and makes .onMouseOverSection only be called when the user selects a component
+\b Added NSIS_CONFIG_COMPONENTPAGE_ALTERNATIVE configuration option which makes components only be toggled when the user clicks on the checkbox and makes \R{onmouseoversection}{.onMouseOverSection} only be called when the user selects a component
 
 \b Added some CppUnit tests
 
-\b Both _=? and /D= now require a space before them so they can safely remove the space from $CMDLINE
+\b Both _?= and /D= now require a space before them so they can safely remove the space from $CMDLINE
 
 \b Fixed a bug that caused the uninstaller CRC-check to fail if \R{packhdr}{!packhdr} created a non-512-bytes-aligned exehead
 
@@ -2229,7 +2907,7 @@ Released on September 24th, 2004
 
 \b Fixed compilation of NSISdl under VS.NET
 
-\b SetCtlColors /BRANDING wasn't working right, if just one of the background or text color were specified
+\b \R{setctlcolors}{SetCtlColors} /BRANDING wasn't working right, if just one of the background or text color were specified
 
 \b Language file fixes and improvements
 
@@ -2295,7 +2973,7 @@ Released on February 7th, 2004
 
 \b New and improved utilities: \L{../Docs/makensisw/Readme.txt}{MakeNSISw}, NSIS Menu (NSIS.exe), NSIS Update (Bin\\NSIS Update.exe) and zip2exe (Bin\\zip2exe.exe)
 
-\b New commands: \R{addplugindir}{!addplugindir}, \R{echo}{!echo}, \R{ifmacrodef}{!ifmacrodef}, \R{ifmacrondef}{!ifmacrondef}, \R{verbose}{!verbose}, \R{aaddbrandingimage}{AddBrandingImage}, \R{asetallowskipfiles}{AllowSkipFiles}, \R{achangeui}{ChangeUI}, \R{acheckbitmap}{CheckBitmap}, \R{createfont}{CreateFont}, \R{adirvar}{DirVar}, \R{adirverify}{DirVerify}, \R{enablewindow}{EnableWindow}, \R{afilebufsize}{FileBufSize}, \R{flushini}{FlushINI}, \R{sgetcurinsttype}{GetCurInstType}, \R{getdlgitem}{GetDlgItem}, \R{getinstdirerror}{GetInstDirError}, \R{ifabort}{IfAbort}, \R{ifsilent}{IfSilent}, \R{initpluginsdir}{InitPluginsDir}, \R{sinsttypegettext}{InstTypeGetText}, \R{sinsttypesettext}{InstTypeSetText}, \R{langstring}{LangString}, \R{alicensebkcolor}{LicenseBkColor}, \R{alicenseforceselection}{LicenseForceSelection}, \R{licenselangstring}{LicenseLangString}, \R{loadlanguagefile}{LoadLanguageFile}, LockWindow, \R{page}{Page}, \R{pageex}{PageEx}, \R{reservefile}{ReserveFile}, \R{sectiongetinsttypes}{SectionGetInstTypes}, \R{ssectiongetsize}{SectionGetSize}, \R{sectionsetinsttypes}{SectionSetInstTypes}, \R{ssectionsetsize}{SectionSetSize}, \R{setbrandingimage}{SetBrandingImage}, SetCompressionLevel, \R{asetcompressor}{SetCompressor}, \R{asetcompressordictsize}{SetCompressorDictSize}, \R{setctlcolors}{SetCtlColors}, \R{ssetcurinsttype}{SetCurInstType}, SetPluginUnload, \R{setsilent}{SetSilent}, \R{showwindow}{ShowWindow}, SubSection (replaced by \R{ssectiongroup}{SectionGroup}), SubSectionEnd (replaced by \R{ssectiongroupend}{SectionGroupEnd}), \R{var}{Var}, \R{viaddversionkey}{VIAddVersionKey}, \R{viproductversion}{VIProductVersion} and \R{axpstyle}{XPStyle}
+\b New commands: \R{addplugindir}{!addplugindir}, \R{echo}{!echo}, \R{ifmacrodef}{!ifmacrodef}, \R{ifmacrondef}{!ifmacrondef}, \R{verbose}{!verbose}, \R{aaddbrandingimage}{AddBrandingImage}, \R{asetallowskipfiles}{AllowSkipFiles}, \R{achangeui}{ChangeUI}, \R{acheckbitmap}{CheckBitmap}, \R{createfont}{CreateFont}, \R{adirvar}{DirVar}, \R{adirverify}{DirVerify}, \R{enablewindow}{EnableWindow}, \R{afilebufsize}{FileBufSize}, \R{flushini}{FlushINI}, \R{sgetcurinsttype}{GetCurInstType}, \R{getdlgitem}{GetDlgItem}, \R{getinstdirerror}{GetInstDirError}, \R{ifabort}{IfAbort}, \R{ifsilent}{IfSilent}, \R{initpluginsdir}{InitPluginsDir}, \R{sinsttypegettext}{InstTypeGetText}, \R{sinsttypesettext}{InstTypeSetText}, \R{langstring}{LangString}, \R{alicensebkcolor}{LicenseBkColor}, \R{alicenseforceselection}{LicenseForceSelection}, \R{licenselangstring}{LicenseLangString}, \R{loadlanguagefile}{LoadLanguageFile}, \R{lockwindow}{LockWindow}, \R{page}{Page}, \R{pageex}{PageEx}, \R{reservefile}{ReserveFile}, \R{sectiongetinsttypes}{SectionGetInstTypes}, \R{ssectiongetsize}{SectionGetSize}, \R{sectionsetinsttypes}{SectionSetInstTypes}, \R{ssectionsetsize}{SectionSetSize}, \R{setbrandingimage}{SetBrandingImage}, SetCompressionLevel, \R{asetcompressor}{SetCompressor}, \R{asetcompressordictsize}{SetCompressorDictSize}, \R{setctlcolors}{SetCtlColors}, \R{ssetcurinsttype}{SetCurInstType}, SetPluginUnload, \R{setsilent}{SetSilent}, \R{showwindow}{ShowWindow}, SubSection (replaced by \R{ssectiongroup}{SectionGroup}), SubSectionEnd (replaced by \R{ssectiongroupend}{SectionGroupEnd}), \R{var}{Var}, \R{viaddversionkey}{VIAddVersionKey}, \R{viproductversion}{VIProductVersion} and \R{axpstyle}{XPStyle}
 
 \b Removed commands: DirShow, DisabledBitmap, EnabledBitmap and SectionDivider
 
@@ -2389,7 +3067,7 @@ Released on January 5th, 2004
 
 \b LangStrings and user variables limit is now 16383 and is enforced
 
-\b Fixed control colors set using SetCtlColors not changing when the system colors were changed
+\b Fixed control colors set using \R{setctlcolors}{SetCtlColors} not changing when the system colors were changed
 
 \b Log window now responds to the context menu key
 
@@ -2413,7 +3091,7 @@ Released on January 5th, 2004
 
 \H{v2.0rc1} 2.0 Release Candidate 1
 
-Released on Decemeber 27th, 2003
+Released on December 27th, 2003
 
 \S1{v2.0rc1-rn} Release Notes
 
@@ -2435,7 +3113,7 @@ Released on Decemeber 27th, 2003
 
 \b Added \R{adirverify}{DirVerify} and \R{getinstdirerror}{GetInstDirError} to allow custom error checking when the installation directory is invalid or the drive does not have enough space
 
-\b Support for reading environmental variables on compile time: \R{compenvvar}{$%envVarName%}
+\b Support for reading environmental variables at compile time: \R{compenvvar}{$%envVarName%}
 
 \b Added /SD parameter for \R{messagebox}{MessageBox}. Allows to set default for silent installers.
 
@@ -2597,37 +3275,37 @@ Released on March 16th, 2003
 
 \b New tutorial in the documentation
 
-\b define_if_last in Page command also works when a define has not been specified for all Page commands.\\<br\\>This fixes the problem with the Modern UI "Click Next" / "Click Install" texts.
+\b define_if_last in \R{page}{Page} command also works when a define has not been specified for all \R{page}{Page} commands.\\<br\\>This fixes the problem with the Modern UI "Click Next" / "Click Install" texts.
 
-\b Added SectionSetInstTypes and SectionGetInstTypes
+\b Added \R{sectionsetinsttypes}{SectionSetInstTypes} and \R{sectiongetinsttypes}{SectionGetInstTypes}
 
-\b Reboot command does not force a reboot anymore (allows the user to save work)
+\b \R{reboot}{Reboot} command does not force a reboot anymore (allows the user to save work)
 
 \b !if[n]def/!else fixes
 
-\b LogSet on now really starts logging
+\b \R{logset}{LogSet} on now really starts logging
 
-\b Cancel button available on all pages after the instfiles page but the last page unless /ENABLECANCEL was used in its Page command
+\b Cancel button available on all pages after the instfiles page but the last page unless /ENABLECANCEL was used in its \R{page}{Page} command
 
 \b License page: No more limit on RTF size
 
 \b LangDLL: Option to auto-count number of languages, shell font support
 
-\b Page and UninstPage can not be used inside sections/functions
+\b \R{page}{Page} and \R{uninstpage}{UninstPage} can not be used inside sections/functions
 
-\b CreateDirectory now uses the error flag
+\b \R{createdirectory}{CreateDirectory} now uses the error flag
 
-\b EnumRegKey/Value output_var check fixed
+\b \R{enumregkey}{EnumRegKey}/Value output_var check fixed
 
 \b Updated translations
 
 \b Dreaded BSOD after plug-ins enumeration finally banished
 
-\b Minimize button and BGGradient and BGImage compatibility fixes
+\b Minimize button and \R{abggradient}{BGGradient} and BGImage compatibility fixes
 
-\b WriteINIStr with empty value works again
+\b \R{writeinistr}{WriteINIStr} with empty value works again
 
-\b Added FlushINI
+\b Added \R{flushini}{FlushINI}
 
 \H{v2.0b2} 2.0 Beta 2
 
@@ -2643,7 +3321,7 @@ Released on February 26th, 2003
 
 \b VC7 compiler compatibility issues fixed
 
-\b CreateDirectory sets error flag
+\b \R{createdirectory}{CreateDirectory} sets error flag
 
 \b InstallOptions: INI File State value fixed
 
@@ -2655,9 +3333,9 @@ Released on February 26th, 2003
 
 Released on February 9th, 2003
 
-\b User interface improvements: better order/grouping of controls, button selection problems fixed, added minimize box, transparent BrandingText
+\b User interface improvements: better order/grouping of controls, button selection problems fixed, added minimize box, transparent \R{abrandingtext}{BrandingText}
 
-\b LangString improvements: can be used before they have been defined, warning if not present in all language tables
+\b \R{langstring}{LangString} improvements: can be used before they have been defined, warning if not present in all language tables
 
 \b New version of the Modern User Interface with UI improvements, bugfixes and some small new features
 
@@ -2665,11 +3343,11 @@ Released on February 9th, 2003
 
 \b No more random compression ratios
 
-\b SetOutPath now sets the working directory
+\b \R{setoutpath}{SetOutPath} now sets the working directory
 
 \b File names are validated, directory given by the user will now always work
 
-\b $QUICKLAUNCH now works with SetShellVarContext all
+\b $QUICKLAUNCH now works with \R{setshellvarcontext}{SetShellVarContext} all
 
 \b Automatically appended directory name in the directory selection dialog will no longer contain squares if not all characters are ASCII.
 
@@ -2677,7 +3355,7 @@ Released on February 9th, 2003
 
 \b Plug-in function's names are now case insensitive
 
-\b Fixed a bug with specifying Icon twice
+\b Fixed a bug with specifying \R{aicon}{Icon} twice
 
 \b Include dirs (!addincludedir)
 
@@ -2691,11 +3369,11 @@ Released on February 9th, 2003
 
 \b Win9x rename on reboot now also works when the destination file does not exist
 
-\b DeleteRegKey works on default value
+\b \R{deleteregkey}{DeleteRegKey} works on default value
 
 \b nsExec can be called from an installer executed by CreateProcess
 
-\b WriteUninstaller sets error code
+\b \R{writeuninstaller}{WriteUninstaller} sets error code
 
 \b Banner.dll compatible with Modern UI
 
@@ -2719,7 +3397,7 @@ Released on December 6th, 2002
 
 \b New paging system
 
-\b Added Page and UninstPage
+\b Added \R{page}{Page} and  \R{uninstpage}{UninstPage}
 
 \b Removed .onNextPage, .onPrevPage, .onInitDialog
 
@@ -2729,7 +3407,7 @@ Released on December 6th, 2002
 
 \b Added accelerator keys
 
-\b Added LangString and LangStringUP for user defined multilingual strings
+\b Added \R{langstring}{LangString} and LangStringUP for user defined multilingual strings
 
 \b Added support for transparent check marks
 
@@ -2745,7 +3423,7 @@ Released on December 6th, 2002
 
 \b !ifdef and friends can now be used in macros
 
-\b SendMessage can send strings (put STR: before a param) and supports timeouts
+\b \R{sendmessage}{SendMessage} can send strings (put \cw{STR:} before a param) and supports timeouts
 
 \b Right mouse button "Copy to clipboard" context menu for the Details window
 
@@ -2753,13 +3431,13 @@ Released on December 6th, 2002
 
 \b Licence text receives initial focus (page up & down work immediately, return key still works)
 
-\b Made win9x move/delete on reboot support proper and function like on win2k
+\b Made Win9x move/delete on reboot support proper and function like on Win2k
 
 \b Now always loads RichEdit v2 if present (links work on Win9x)
 
-\b DeleteRegKey now complains if given a third parameter (other than /ifempty)
+\b \R{deleteregkey}{DeleteRegKey} now complains if given a third parameter (other than /ifempty)
 
-\b RegDLL now works with DLLs dependent on DLLs from the same directory
+\b \R{regdll}{RegDLL} now works with DLLs dependent on DLLs from the same directory
 
 \b $\{LANG_langName\} defined as the language id when loading a NLF
 
@@ -2785,17 +3463,17 @@ Released on December 6th, 2002
 
 \b Changed section flags values
 
-\b SectionSetFlags can now set bold too
+\b \R{sectionsetflags}{SectionSetFlags} can now set bold too
 
-\b SectionSetFlags now works in silent installers too
+\b \R{sectionsetflags}{SectionSetFlags} now works in silent installers too
 
 \b SectionSetName for sub sections doesn't need '-' in front of the name
 
 \b Added SetPluginUnload
 
-\b Hidden section can now use SectionIn too
+\b Hidden section can now use \R{ssectionin}{SectionIn} too
 
-\b File /nonfatal switch added
+\b \R{file}{File} /nonfatal switch added
 
 \b Plugins no longer add size to their containing section
 
@@ -2815,7 +3493,7 @@ Released on August 29th, 2002
 
 \b Added CreateFont
 
-\b Added .onMouseOverSection
+\b Added \R{onmouseoversection}{.onMouseOverSection}
 
 \b Added .onInitDialog and un.onInitDialog
 
@@ -2825,11 +3503,11 @@ Released on August 29th, 2002
 
 \b SendMessage WM_SETTEXT treats lParam as a string and not a number
 
-\b CopyFiles script message no longer always prints (silent)
+\b \R{copyfiles}{CopyFiles} script message no longer always prints (silent)
 
 \b Custom install type text can now be changed
 
-\b ChangeUI can now change IDD_VERIFY
+\b \R{achangeui}{ChangeUI} can now change IDD_VERIFY
 
 \b Default license color now fits the user system
 
@@ -2871,7 +3549,7 @@ Released on August 29th, 2002
 
 \b Added LangDLL.dll plugin
 
-\b CallInstDLL /NOUNLOAD added (works on plugin calls too)
+\b \R{callinstdll}{CallInstDLL} /NOUNLOAD added (works on plugin calls too)
 
 \H{v2.0a6} 2.0 Alpha 6
 
@@ -2887,7 +3565,7 @@ Released on August 9th, 2002
 
 \b Added UseOuterUIItem
 
-\b Enhanced ChangeUI
+\b Enhanced \R{achangeui}{ChangeUI}
 
 \b Enhanced SetDlgItemText
 
@@ -2919,11 +3597,11 @@ Released on August 5th, 2002
 
 Released on August 4th, 2002
 
-\b Added LoadLanguageFile
+\b Added \R{loadlanguagefile}{LoadLanguageFile}
 
 \b Added $LANGUAGE
 
-\b Added /LANG option to string setters (Name, Caption, etc.)
+\b Added /LANG option to string setters (\R{aname}{Name}, \R{acaption}{Caption}, etc.)
 
 \b 'LogSet on' now builds a log file if not already created
 
@@ -2933,31 +3611,31 @@ Released on July 31st, 2002
 
 \b Added $\{NSISDIR\}
 
-\b Added XPStyle
+\b Added \R{axpstyle}{XPStyle}
 
-\b Added SetFont
+\b Added \R{asetfont}{SetFont}
 
-\b Added ChangeUI
+\b Added \R{achangeui}{ChangeUI}
 
-\b Added AddBrandingImage, and SetBrandingImage
+\b Added AddBrandingImage, and \R{setbrandingimage}{SetBrandingImage}
 
-\b Added SetCompressor (no more makensis-bz2.exe)
+\b Added  \R{asetcompressor}{SetCompressor} (no more makensis-bz2.exe)
 
-\b Added LicenseBkColor
+\b Added \R{alicensebkcolor}{LicenseBkColor}
 
 \b 'SpaceTexts none' now causes no space texts to appear
 
-\b Icon and UninstallIcon now support icons of any type
+\b \R{aicon}{Icon} and \R{auninstallicon}{UninstallIcon} now support icons of any type
 
-\b CheckBitmap now support bitmaps with any color table/depth
+\b \R{acheckbitmap}{CheckBitmap} now support bitmaps with any color table/depth
 
 \b Unused resources are removed before writing out the installer
 
-\b Documented !error and !warning
+\b Documented \R{error}{!error} and \R{warning}{!warning}
 
-\b Added !echo and !verbose
+\b Added \R{echo}{!echo} and \R{verbose}{!verbose}
 
-\b Added force option for CRCCheck
+\b Added force option for \R{acrccheck}{CRCCheck}
 
 \b Updated to Makensisw 1.6
 
@@ -2971,7 +3649,7 @@ Released on July 31st, 2002
 
 \b License data can now be RTF
 
-\b WindowIcon is now handled in the compiler
+\b \R{awindowicon}{WindowIcon} is now handled in the compiler
 
 \b Removed debug version (it never worked anyway)
 
@@ -2981,9 +3659,9 @@ Released on July 31st, 2002
 
 Released on July 9th, 2002
 
-\b Added expand node option to Section and SubSection
+\b Added expand node option to \R{ssection}{Section} and SubSection
 
-\b Added preserve file attribute option to File command
+\b Added preserve file attribute option to \R{file}{File} command
 
 \b Copy-All bug fix in Makensisw
 
@@ -2999,14 +3677,14 @@ Released on May 22nd, 2002
 
 \b No more SectionDivider, but SubSection and SubSectionEnd.
 
-\b No more EnabledBitmap/DisabledBitmap, just CheckBitmap. (with tons of button states)
+\b No more EnabledBitmap/DisabledBitmap, just \R{acheckbitmap}{CheckBitmap}. (with tons of button states)
 
 \b Bugfixes of brokenness.
 
-\b Added ! for Section/SubSection to make bold.
+\b Added ! for \R{ssection}{Section}/SubSection to make bold.
 
 \b Made config.h have hacks for easier building for me. :)
 
 \H{cl-older} Older Versions
 
-\W{http://nsis.sourceforge.net/download/nsis1/}{NSIS 1.x version history}
+\W{http://wayback.archive.org/web/20100820151646/http://www.nullsoft.com/free/nsis/version-history.html}{NSIS 1.x version history}

@@ -4,7 +4,7 @@
  * This file is a part of LZMA compression module for NSIS.
  * 
  * Original LZMA SDK Copyright (C) 1999-2006 Igor Pavlov
- * Modifications Copyright (C) 2003-2006 Amir Szekely <kichik@netvision.net.il>
+ * Modifications Copyright (C) 2003-2019 Amir Szekely <kichik@netvision.net.il>
  * 
  * Licensed under the Common Public License version 1.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,9 @@ class CMatchFinder:
   UInt32 _matchMaxLen;
   CIndex *_hash;
   CIndex *_son;
+#ifdef HASH_ARRAY_2
   UInt32 _hashMask;
+#endif
   UInt32 _cutValue;
   UInt32 _hashSizeSum;
 

@@ -2,13 +2,17 @@
  * This file is a part of the zlib compression module for NSIS.
  * 
  * Copyright and license information can be found below.
- * Modifications Copyright (C) 1999-2009 Nullsoft and Contributors
+ * Modifications Copyright (C) 1999-2019 Nullsoft and Contributors
  * 
  * The original zlib source code is available at
  * http://www.zlib.net/
  * 
  * This software is provided 'as-is', without any express or implied
  * warranty.
+ *
+ * Unicode support by Jim Park -- 08/27/2007
+ * All messages and true strings turned into TCHARs for when we
+ * create viewable messages.
  */
 
 #include "../Platform.h"
@@ -165,6 +169,9 @@ uInt *hn)               /* working area: values in order of bit length */
   int y;                        /* number of dummy codes added */
   uInt z;                       /* number of entries in current table */
 
+#ifdef __GNUC__
+  r.base = 0; // Avoid GCC "may be used uninitialized in this function" warning
+#endif
 
   /* Generate counts for each bit length */
   p=c;
@@ -367,14 +374,14 @@ int ZEXPORT inflate(z_streamp z)
       switch (t >> 1)
       {
         case 0:                         /* stored */
-          Tracev((stderr, "inflate:     stored block%s\n",
-                 LAST ? " (last)" : ""));
+          Tracev((stderr, _T("inflate:     stored block%s\n"),
+                 LAST ? _T(" (last)") : _T("")));
           DUMPBITS(k&7)
           s->mode = LENS;               /* get length of stored block */
           break;
         case 1:                         /* fixed */
-          Tracev((stderr, "inflate:     fixed codes block%s\n",
-                 LAST ? " (last)" : ""));
+          Tracev((stderr, _T("inflate:     fixed codes block%s\n"),
+                 LAST ? _T(" (last)") : _T("")));
           {
             if (!fixed_built)
             {
@@ -414,8 +421,8 @@ int ZEXPORT inflate(z_streamp z)
           s->mode = CODES_START;
           break;
         case 2:                         /* dynamic */
-          Tracev((stderr, "inflate:     dynamic codes block%s\n",
-                 LAST ? " (last)" : ""));
+          Tracev((stderr, _T("inflate:     dynamic codes block%s\n"),
+                 LAST ? _T(" (last)") : _T("")));
           s->mode = TABLE;
           break;
         case 3:                         /* illegal */
@@ -424,10 +431,10 @@ int ZEXPORT inflate(z_streamp z)
       }
       break;
     case LENS:
-      NEEDBITS(16)
+      NEEDBITS(32)
       s->sub.left = (uInt)b & 0xffff;
       b = k = 0;                      /* dump bits */
-      Tracev((stderr, "inflate:       stored length %u\n", s->sub.left));
+      Tracev((stderr, _T("inflate:       stored length %u\n"), s->sub.left));
       s->mode = s->sub.left ? STORED : s->last;
       break;
     case STORED:
@@ -457,7 +464,7 @@ int ZEXPORT inflate(z_streamp z)
       //t = 258 + (t & 0x1f) + ((t >> 5) & 0x1f);
       DUMPBITS(14)
       s->sub.trees.index = 0;
-      Tracev((stderr, "inflate:       table sizes ok\n"));
+      Tracev((stderr, _T("inflate:       table sizes ok\n")));
       s->mode = BTREE;
     case BTREE:
       while (s->sub.trees.index < 4 + (s->sub.trees.table >> 10))
@@ -473,7 +480,7 @@ int ZEXPORT inflate(z_streamp z)
       {
         uInt hn = 0;          /* hufts used in space */
 
-        t = huft_build(s->sub.trees.t_blens, 19, 19, (short *)Z_NULL, (short*)Z_NULL,
+        t = huft_build(s->sub.trees.t_blens, 19, 19, (unsigned short*)Z_NULL, (unsigned short*)Z_NULL,
                  &s->sub.trees.tb, &s->sub.trees.bb, s->hufts, &hn);
         if (t != Z_OK || !s->sub.trees.bb)
         {
@@ -483,7 +490,7 @@ int ZEXPORT inflate(z_streamp z)
       }
 
       s->sub.trees.index = 0;
-      Tracev((stderr, "inflate:       bits tree ok\n"));
+      Tracev((stderr, _T("inflate:       bits tree ok\n")));
       s->mode = DTREE;
     case DTREE:
       while (t = s->sub.trees.table,
@@ -558,7 +565,7 @@ int ZEXPORT inflate(z_streamp z)
           s->mode = BAD;
           LEAVE(Z_DATA_ERROR);
         }
-        Tracev((stderr, "inflate:       trees ok\n"));
+        Tracev((stderr, _T("inflate:       trees ok\n")));
 
         //s->sub.decode.t_codes.mode = CODES_START;
         s->sub.decode.t_codes.lbits = (Byte)bl;
@@ -682,7 +689,7 @@ int ZEXPORT inflate(z_streamp z)
         LEAVE(Z_OK)
       if (s->mode == CODES_WASH)
       {
-        Tracev((stderr, "inflate:       codes end, %lu total out\n",
+        Tracev((stderr, _T("inflate:       codes end, %lu total out\n"),
                z->total_out + (q >= s->read ? q - s->read :
                (s->end - s->read) + (q - s->window))));
       }

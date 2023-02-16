@@ -2,7 +2,7 @@
  * This file is a part of the bzip2 compression module for NSIS.
  * 
  * Copyright and license information can be found below.
- * Modifications Copyright (C) 1999-2009 Nullsoft and Contributors
+ * Modifications Copyright (C) 1999-2019 Nullsoft and Contributors
  * 
  * The original zlib source code is available at
  * http://www.bzip.org/
@@ -11,6 +11,8 @@
  * 
  * This software is provided 'as-is', without any express or implied
  * warranty.
+ *
+ * Reviewed for Unicode support by Jim Park -- 08/27/2007
  */
 
 #include "bzlib.h"

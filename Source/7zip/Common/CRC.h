@@ -4,7 +4,7 @@
  * This file is a part of LZMA compression module for NSIS.
  * 
  * Original LZMA SDK Copyright (C) 1999-2006 Igor Pavlov
- * Modifications Copyright (C) 2003-2006 Amir Szekely <kichik@netvision.net.il>
+ * Modifications Copyright (C) 2003-2019 Amir Szekely <kichik@netvision.net.il>
  * 
  * Licensed under the Common Public License version 1.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,8 @@
  * 
  * This software is provided 'as-is', without any express or implied
  * warranty.
+ *
+ * Reviewed for Unicode support by Jim Park -- 08/28/2007
  */
 
 #ifndef __COMMON_CRC_H
@@ -25,8 +27,8 @@ class CCRC
 {
   UInt32 _value;
 public:
-	static UInt32 Table[256];
-	static void InitTable();
+  static UInt32 Table[256];
+  static void InitTable();
 
   CCRC():  _value(0xFFFFFFFF){};
   void Init() { _value = 0xFFFFFFFF; }

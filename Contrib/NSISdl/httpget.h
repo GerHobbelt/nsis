@@ -37,6 +37,14 @@
 **   note that user, pass, port, and /requestwhatever are all optional :)
 **   note that also, http:// is really not important. if you do poo://
 **   or even leave out the http:// altogether, it will still work.
+**
+** Reviewed for Unicode support by Jim Park -- 08/24/2004
+**   Everything remains ANSI.  Made sure all TCHAR style functions were
+**   changed to strictly ANSI.
+**
+** Notes:
+**   We used to have a fork of JNetLib in MakeNSISw that was slightly different, 
+**   you can see it @ http://sf.net/p/nsis/code/6603/tree/NSIS/trunk/Contrib/Makensisw/jnetlib/
 */
 
 #ifndef _HTTPGET_H_
@@ -50,21 +58,21 @@ class JNL_HTTPGet
     JNL_HTTPGet(JNL_AsyncDNS *dns=JNL_CONNECTION_AUTODNS, int recvbufsize=16384, char *proxy=NULL);
     ~JNL_HTTPGet();
 
-    void addheader(char *header);
+    void addheader(const char *header);
 
-    void connect(char *url);
+    void connect(const char *url);
 
     int run(); // returns: 0 if all is OK. -1 if error (call geterrorstr()). 1 if connection closed.
 
     int   get_status(); // returns 0 if connecting, 1 if reading headers, 
                         // 2 if reading content, -1 if error.
 
-    char *getallheaders(); // double null terminated, null delimited list
-    char *getheader(char *headername);
+    const char *getallheaders(); // double null terminated, null delimited list
+    const char *getheader(const char *headername);
     char *getreply() { return m_reply; }
     int   getreplycode(); // returns 0 if none yet, otherwise returns http reply code.
 
-    char *geterrorstr() { return m_errstr;}
+    const char *geterrorstr() { return m_errstr;}
 
     int bytes_available();
     int get_bytes(char *buf, int len);
@@ -77,7 +85,7 @@ class JNL_HTTPGet
   public:
     void reinit();
     void deinit();
-    void seterrstr(char *str) { if (m_errstr) free(m_errstr); m_errstr=(char*)malloc(strlen(str)+1); strcpy(m_errstr,str); }
+    void seterrstr(const CHAR *str) { if (m_errstr) free(m_errstr); m_errstr=(char*)malloc(strlen(str)+1); strcpy(m_errstr,str); }
 
     void do_parse_url(char *url, char **host, int *port, char **req, char **lp);
     void do_encode_mimestr(char *in, char *out);

@@ -18,14 +18,11 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 
+  Reviewed for Unicode support by Jim Park -- 08/20/2007
 */
 #ifndef TOOLBAR_H
 #define TOOLBAR_H
 #include <commctrl.h>
-
-#define TOOLBAR_ID                   10001
-
-#define BUTTONCOUNT     15
 
 #define TBB_LOADSCRIPT                   0
 #define TBB_SAVE                         1
@@ -39,11 +36,7 @@
 #define TBB_COMPRESSOR                   9
 #define TBB_EDITSCRIPT                   10
 #define TBB_BROWSESCR                    11
-#define TBB_SEP3                         12
-#define TBB_NSISHOME                     13
-#define TBB_DOCS                         14
-
-#define IMAGECOUNT      16
+#define BUTTONCOUNT                      12
 
 #define IDB_LOADSCRIPT                   0
 #define IDB_SAVE                         1
@@ -54,19 +47,16 @@
 #define IDB_EDITSCRIPT                   6
 #define IDB_BROWSESCR                    7
 #define IDB_CLEARLOG                     8
-#define IDB_NSISHOME                     9
-#define IDB_DOCS                         10
-#define IDB_COMPRESSOR                   11
-#define IDB_COMPRESSOR_SCRIPT            11
-#define IDB_COMPRESSOR_BZIP2             12
-#define IDB_COMPRESSOR_ZLIB              13
-#define IDB_COMPRESSOR_BEST              14
-#define IDB_COMPRESSOR_LZMA              15
+#define IDB_COMPRESSOR_SCRIPT            9
+#define IDB_COMPRESSOR_BZIP2             10
+#define IDB_COMPRESSOR_ZLIB              11
+#define IDB_COMPRESSOR_BEST              12
+#define IDB_COMPRESSOR_LZMA              13
+#define IMAGECOUNT                       14
+#define IDB_COMPRESSOR IDB_COMPRESSOR_SCRIPT
 
 typedef struct ToolBarStruct {
   HWND hwnd;
-  HMENU dropdownmenu;
-  POINT dropdownpoint;
   HIMAGELIST imagelist;
   HIMAGELIST imagelistd;
   HIMAGELIST imagelisth;
@@ -75,6 +65,6 @@ typedef struct ToolBarStruct {
 void CreateToolBar();
 void EnableToolBarButton(int, BOOL);
 void AddToolBarTooltips();
-void ShowToolbarDropdownMenu();
+void ShowCompressorToolbarDropdownMenu(const NMTOOLBAR&nmtb);
 void UpdateToolBarCompressorButton();
 #endif

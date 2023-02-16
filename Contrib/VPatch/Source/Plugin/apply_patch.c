@@ -22,6 +22,8 @@
 // 2. Altered source versions must be plainly marked as such, and must not be
 //    misrepresented as being the original software.
 // 3. This notice may not be removed or altered from any source distribution.
+//
+// Reviewed for Unicode support by Jim Park -- 08/29/2007
 
 #include "apply_patch.h"
 #include "checksum.h"
@@ -47,7 +49,7 @@ int DoPatch(HANDLE hPatch, HANDLE hSource, HANDLE hDest) {
   FILETIME targetModifiedTime;
   
   // special 'addition' for the dll: since the patch file is now
-  // in a seperate file, the VPAT header might be right at the start
+  // in a separate file, the VPAT header might be right at the start
   // of the file, and a pointer at the end of the file is probably missing
   // (because all patch generator versions don't append it, the linker/gui
   //  does this).

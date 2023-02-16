@@ -4,7 +4,7 @@
  * This file is a part of LZMA compression module for NSIS.
  * 
  * Original LZMA SDK Copyright (C) 1999-2006 Igor Pavlov
- * Modifications Copyright (C) 2003-2006 Amir Szekely <kichik@netvision.net.il>
+ * Modifications Copyright (C) 2003-2019 Amir Szekely <kichik@netvision.net.il>
  * 
  * Licensed under the Common Public License version 1.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,24 @@
  * 
  * This software is provided 'as-is', without any express or implied
  * warranty.
+ *
+ * Reviewed for Unicode support by Jim Park -- 08/24/2007
  */
 
 // DLLExports.cpp
 
 // #include "StdAfx.h"
 
-#ifdef WIN32
-#  include <objbase.h>
+#ifdef _WIN32
 #  include <initguid.h>
+#  include <objbase.h>
+#endif
+
+#ifndef INITGUID
+#  define INITGUID
 #endif
 
 #include "../Platform.h"
 
-#define INITGUID
 #include "7zip/ICoder.h"
 #include "7zip/Compress/LZ/IMatchFinder.h"

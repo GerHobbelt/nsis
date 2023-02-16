@@ -3,7 +3,7 @@
  * 
  * This file is a part of NSIS.
  * 
- * Copyright (C) 1999-2009 Nullsoft and Contributors
+ * Copyright (C) 1999-2019 Nullsoft and Contributors
  * 
  * Licensed under the zlib/libpng license (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,15 +12,18 @@
  * 
  * This software is provided 'as-is', without any express or implied
  * warranty.
+ *
+ * Unicode support by Jim Park -- 08/24/2007
  */
 
 #include "Platform.h"
 #include "crc32.h"
 #include "exehead/config.h"
+
 #ifdef NSIS_CONFIG_CRC_SUPPORT
 
 // this is based on the (slow,small) CRC32 implementation from zlib.
-crc32_t NSISCALL CRC32(crc32_t crc, const unsigned char *buf, unsigned int len)
+crc32_t NSISCALL CRC32(crc32_t crc, const unsigned char *buf, size_t len)
 {
     static crc32_t crc_table[256];
 

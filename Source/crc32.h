@@ -3,7 +3,7 @@
  * 
  * This file is a part of NSIS.
  * 
- * Copyright (C) 1999-2009 Nullsoft and Contributors
+ * Copyright (C) 1999-2019 Nullsoft and Contributors
  * 
  * Licensed under the zlib/libpng license (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,18 +12,21 @@
  * 
  * This software is provided 'as-is', without any express or implied
  * warranty.
+ *
+ * Reviewed for Unicode support by Jim Park -- 08/24/2007
  */
-
-#include "Platform.h"
 
 #ifndef ___CRC32__H___
 #define ___CRC32__H___
+
+#include "Platform.h"
+#include <stddef.h> // size_t
 
 typedef UINT32 crc32_t;
 
 #ifdef __cplusplus
 extern "C"
 #endif
-crc32_t NSISCALL CRC32(crc32_t crc, const unsigned char *buf, unsigned int len);
+crc32_t NSISCALL CRC32(crc32_t crc, const unsigned char *buf, size_t len);
 
 #endif//!___CRC32__H___

@@ -1,3 +1,5 @@
+// Unicode support by Jim Park -- 08/23/2007
+
 #include "stdafx.h"
 #include "Plugin.h"
 #include "Buffers.h"
@@ -5,83 +7,81 @@
 
 HWND g_hwndParent;
 
-char *AllocString()
+#define isvalidnsisvarindex(varnum) ( ((unsigned int)(varnum)) < (__INST_LAST) )
+
+TCHAR *AllocString()
 {
-    return (char*) GlobalAlloc(GPTR,g_stringsize);
+    return (TCHAR*) GlobalAlloc(GPTR,g_stringsize*sizeof(TCHAR));
 }
 
-char *AllocStr(char *str)
+TCHAR *AllocStr(TCHAR *str)
 {
-    return lstrcpy(AllocString(), str);
+    return lstrcpyn(AllocString(), str, g_stringsize);
 }
 
-char* system_popstring()
+TCHAR* system_popstring()
 {
-        char *str;
-        stack_t *th;
+    stack_t *pSt;
+    TCHAR *src, *dst, *retval;
 
-        if (!g_stacktop || !*g_stacktop) return NULL;
-        th=(*g_stacktop);
+    if (!g_stacktop || !*g_stacktop) return NULL;
+    pSt = *g_stacktop, *g_stacktop = pSt->next, src = pSt->text, dst = (TCHAR*)pSt;
 
-        str = AllocString();
-        lstrcpy(str,th->text);
-
-        *g_stacktop = th->next;
-        GlobalFree((HGLOBAL)th);
-        return str;
+    // We don't have to call AllocString+lstrcpy+GlobalFree if we convert the stack item to a string
+    for (retval = dst;;) if (!(*dst++ = *src++)) return retval;
 }
 
-char *system_pushstring(char *str)
+TCHAR *system_pushstring(TCHAR *str)
 {
         stack_t *th;
         if (!g_stacktop) return str;
-        th=(stack_t*)GlobalAlloc(GPTR,sizeof(stack_t)+g_stringsize);
+        th=(stack_t*)GlobalAlloc(GPTR,sizeof(stack_t)+(g_stringsize*sizeof(TCHAR)));
         lstrcpyn(th->text,str,g_stringsize);
         th->next=*g_stacktop;
         *g_stacktop=th;
         return str;
 }
 
-char *system_getuservariable(int varnum)
+TCHAR *system_getuservariable(int varnum)
 {
-        if (varnum < 0 || varnum >= __INST_LAST) return AllocString();
+        if (!isvalidnsisvarindex(varnum)) return AllocString();
         return AllocStr(g_variables+varnum*g_stringsize);
 }
 
-char *system_setuservariable(int varnum, char *var)
+TCHAR *system_setuservariable(int varnum, TCHAR *var)
 {
-        if (var != NULL && varnum >= 0 && varnum < __INST_LAST) {
-                lstrcpy (g_variables + varnum*g_stringsize, var);
+        if (var && isvalidnsisvarindex(varnum)) {
+                lstrcpy(g_variables + varnum*g_stringsize, var);
         }
         return var;
 }
 
 // Updated for int64 and simple bitwise operations
-__int64 myatoi64(char *s)
+__int64 myatoi64(TCHAR *s)
 {
   __int64 v=0;
   // Check for right input
   if (!s) return 0;
-  if (*s == '0' && (s[1] == 'x' || s[1] == 'X'))
+  if (*s == _T('0') && (s[1] == _T('x') || s[1] == _T('X')))
   {
     s++;
     for (;;)
     {
       int c=*(++s);
-      if (c >= '0' && c <= '9') c-='0';
-      else if (c >= 'a' && c <= 'f') c-='a'-10;
-      else if (c >= 'A' && c <= 'F') c-='A'-10;
+      if (c >= _T('0') && c <= _T('9')) c-=_T('0');
+      else if (c >= _T('a') && c <= _T('f')) c-=_T('a')-10;
+      else if (c >= _T('A') && c <= _T('F')) c-=_T('A')-10;
       else break;
       v<<=4;
       v+=c;
     }
   }
-  else if (*s == '0' && s[1] <= '7' && s[1] >= '0')
+  else if (*s == _T('0') && s[1] <= _T('7') && s[1] >= _T('0'))
   {
     for (;;)
     {
       int c=*(++s);
-      if (c >= '0' && c <= '7') c-='0';
+      if (c >= _T('0') && c <= _T('7')) c-=_T('0');
       else break;
       v<<=3;
       v+=c;
@@ -90,10 +90,10 @@ __int64 myatoi64(char *s)
   else
   {
     int sign=0;
-    if (*s == '-') sign++; else s--;
+    if (*s == _T('-')) sign++; else s--;
     for (;;)
     {
-      int c=*(++s) - '0';
+      int c=*(++s) - _T('0');
       if (c < 0 || c > 9) break;
       v*=10;
       v+=c;
@@ -102,7 +102,7 @@ __int64 myatoi64(char *s)
   }
 
   // Support for simple ORed expressions
-  if (*s == '|') 
+  if (*s == _T('|')) 
   {
       v |= myatoi64(s+1);
   }
@@ -110,21 +110,21 @@ __int64 myatoi64(char *s)
   return v;
 }
 
-void myitoa64(__int64 i, char *buffer)
+void myitoa64(__int64 i, TCHAR *buffer)
 {
-    char buf[128], *b = buf;
+    TCHAR buf[128], *b = buf;
 
     if (i < 0)
     {
-        *(buffer++) = '-';
+        *(buffer++) = _T('-');
         i = -i;
     }
-    if (i == 0) *(buffer++) = '0';
+    if (i == 0) *(buffer++) = _T('0');
     else 
     {
         while (i > 0) 
         {
-            *(b++) = '0' + ((char) (i%10));
+            *(b++) = _T('0') + ((TCHAR) (i%10));
             i /= 10;
         }
         while (b > buf) *(buffer++) = *(--b);
@@ -132,35 +132,38 @@ void myitoa64(__int64 i, char *buffer)
     *buffer = 0;
 }
 
-int popint64()
+INT_PTR system_popintptr()
 {
-    int value;
-	char *str;
-	if ((str = system_popstring()) == NULL) return -1;
-	value = (int) myatoi64(str);
+    INT_PTR value;
+    TCHAR *str;
+    if ((str = system_popstring()) == NULL) return -1;
+    value = StrToIntPtr(str);
     GlobalFree(str);
-	return value;
+    return value;
 }
 
-void system_pushint(int value)
+void system_pushintptr(INT_PTR value)
 {
-	char buffer[1024];
-	wsprintf(buffer, "%d", value);
-	system_pushstring(buffer);
+    TCHAR buffer[50];
+    wsprintf(buffer, sizeof(void*) > 4 ? _T("%Id") : _T("%d"), value);
+    system_pushstring(buffer);
 }
 
-char *copymem(char *output, char *input, int size)
+void *copymem(void *output, void *input, size_t cbSize)
 {
-    char *out = output;
-    if ((input != NULL) && (output != NULL))
-        while (size-- > 0) *(out++) = *(input++);
-    return output;
+  BYTE *out = (BYTE*) output;
+  BYTE *in = (BYTE*) input;
+  if ((input != NULL) && (output != NULL))
+  {
+    while (cbSize-- > 0) *(out++) = *(in++);
+  }
+  return output;
 }
 
 HANDLE GlobalCopy(HANDLE Old)
 {
-	SIZE_T size = GlobalSize(Old);
-    return copymem(GlobalAlloc(GPTR, size), Old, (int) size);
+    size_t size = GlobalSize(Old);
+    return copymem(GlobalAlloc(GPTR, size), Old, size);
 }
 
 UINT_PTR NSISCallback(enum NSPIM msg)

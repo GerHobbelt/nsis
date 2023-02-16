@@ -2,7 +2,7 @@
  * This file is a part of the bzip2 compression module for NSIS.
  * 
  * Copyright and license information can be found below.
- * Modifications Copyright (C) 1999-2009 Nullsoft and Contributors
+ * Modifications Copyright (C) 1999-2019 Nullsoft and Contributors
  * 
  * The original zlib source code is available at
  * http://www.bzip.org/
@@ -11,6 +11,8 @@
  * 
  * This software is provided 'as-is', without any express or implied
  * warranty.
+ *
+ * Reviewed for Unicode support by Jim Park -- 08/27/2007
  */
 
 /*-------------------------------------------------------------*/
@@ -218,10 +220,10 @@ void generateMTFValues ( EState* s )
 
    for (i = 0; i < s->nblock; i++) {
       UChar ll_i;
-      AssertD ( wr <= i, "generateMTFValues(1)" );
+      AssertD ( wr <= i, _T("generateMTFValues(1)") );
       j = ptr[i]-1; if (j < 0) j += s->nblock;
       ll_i = s->unseqToSeq[block[j]];
-      AssertD ( ll_i < s->nInUse, "generateMTFValues(2a)" );
+      AssertD ( ll_i < s->nInUse, _T("generateMTFValues(2a)") );
 
       if (yy[0] == ll_i) { 
          zPend++;
@@ -258,7 +260,7 @@ void generateMTFValues ( EState* s )
                *ryy_j = rtmp2;
             };
             yy[0] = rtmp;
-            j = ryy_j - &(yy[0]);
+            j = BUGBUG64TRUNCATE(Int32, ryy_j - &(yy[0]));
             mtfv[wr] = j+1; wr++; s->mtfFreq[j+1]++;
          }
 
@@ -296,7 +298,7 @@ void sendMTFValues ( EState* s )
 {
    Int32 v, t, i, j, gs, ge, totc, bt, bc, iter;
    Int32 nSelectors, alphaSize, minLen, maxLen, selCtr;
-   Int32 nGroups, nBytes;
+   Int32 nGroups;
 
    /*--
    UChar  len [BZ_N_GROUPS][BZ_MAX_ALPHA_SIZE];
@@ -537,7 +539,6 @@ void sendMTFValues ( EState* s )
              if (s->inUse[i * 16 + j]) inUse16[i] = True;
       }
      
-      nBytes = s->numZ;
       for (i = 0; i < 16; i++)
          if (inUse16[i]) bsW(s,1,1); else bsW(s,1,0);
 
@@ -550,7 +551,6 @@ void sendMTFValues ( EState* s )
    }
 
    /*--- Now the selectors. ---*/
-   nBytes = s->numZ;
    bsW ( s, 3, nGroups );
    bsW ( s, 15, nSelectors );
    for (i = 0; i < nSelectors; i++) { 
@@ -559,8 +559,6 @@ void sendMTFValues ( EState* s )
    }
 
    /*--- Now the coding tables. ---*/
-   nBytes = s->numZ;
-
    for (t = 0; t < nGroups; t++) {
       Int32 curr = s->len[t][0];
       bsW ( s, 5, curr );
@@ -573,7 +571,6 @@ void sendMTFValues ( EState* s )
 
 
    /*--- And finally, the block data proper ---*/
-   nBytes = s->numZ;
    selCtr = 0;
    gs = 0;
    while (True) {
