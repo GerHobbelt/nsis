@@ -581,8 +581,8 @@ if defenv['PLATFORM'] == 'win32':
 		AlwaysBuild(cmd)
 
 	nsis_menu_target = defenv.Command(os.path.join('$ZIPDISTDIR', 'NSIS.exe'),
-																		os.path.join('$ZIPDISTDIR', 'Examples', 'NSISMenu.nsi'),
-																		build_nsis_menu_for_zip)
+		os.path.join('$ZIPDISTDIR', 'Examples', 'NSISMenu.nsi'),
+		build_nsis_menu_for_zip)
 	defenv.MakeReproducible(nsis_menu_target)
 	defenv.Sign(nsis_menu_target)
 
