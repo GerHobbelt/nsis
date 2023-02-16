@@ -31,6 +31,7 @@
 #include "manifest.h"
 #include "icon.h"
 #include "utf.h" // For NStream
+#include "BinInterop.h"
 
 #include "exehead/api.h"
 #include "exehead/resource.h"
@@ -857,7 +858,7 @@ int CEXEBuild::add_db_data(IMMap *mmap) // returns offset
         bufferlen = INT_MAX-st-sizeof(int); //   so maximize compressor room and hope the file compresses well
       db->resize(st + bufferlen + sizeof(int));
 
-    int n = compressor->Init(build_compress_level, build_compress_dict_size);
+    int n = compressor->Init(build_compress_level, build_compress_dict_size, length);
     if (n != C_OK)
     {
       ERROR_MSG(_T("Internal compiler error #12345: deflateInit() failed(%") NPRIs _T(" [%d]).\n"), compressor->GetErrStr(n), n);
@@ -1004,7 +1005,7 @@ int CEXEBuild::add_data(const char *data, int length, IGrowBuf *dblock) // retur
     int bufferlen=length+1024+length/4; // give a nice 25% extra space
     dblock->resize(st+bufferlen+sizeof(int));
 
-    int n = compressor->Init(build_compress_level, build_compress_dict_size);
+    int n = compressor->Init(build_compress_level, build_compress_dict_size, length);
     if (n != C_OK)
     {
       ERROR_MSG(_T("Internal compiler error #12345: deflateInit() failed(%") NPRIs _T(" [%d]).\n"), compressor->GetErrStr(n), n);
@@ -2708,7 +2709,7 @@ retry_output:
 #ifdef NSIS_CONFIG_COMPRESSION_SUPPORT
   if (build_compress_whole)
   {
-    int n = compressor->Init(build_compress_level, build_compress_dict_size);
+    int n = compressor->Init(build_compress_level, build_compress_dict_size, C_UNKNOWN_SIZE);
     if (n != C_OK)
     {
       ERROR_MSG(_T("Internal compiler error #12345: deflateInit() failed(%") NPRIs _T(" [%d]).\n"), compressor->GetErrStr(n), n);
@@ -3179,7 +3180,8 @@ int CEXEBuild::uninstall_generate()
       // compress uninstaller too
       {
         char obuf[65536];
-        int n = compressor->Init(build_compress_level, build_compress_dict_size);
+        int uncompressed_total = uhd.getlen() + ubuild_datablock.getlen();
+        int n = compressor->Init(build_compress_level, build_compress_dict_size, uncompressed_total);
         if (n != C_OK)
         {
           ERROR_MSG(_T("Internal compiler error #12345: deflateInit() failed(%") NPRIs _T(" [%d]).\n"), compressor->GetErrStr(n), n);
@@ -3403,12 +3405,18 @@ int CEXEBuild::parse_pragma(LineParser &line)
     return rvErr;
   }
 
+  if (line.gettoken_enum(1, _T("verifyloadimage\0")) == 0)
+  {
+    bool valid = LoadImageCanLoadFile(line.gettoken_str(2));
+    return valid ? rvSucc : (warning_fl(DW_BADFORMAT_EXTERNAL_FILE, _T("Unsupported format %") NPRIs, line.gettoken_str(2)), rvWarn);
+  }
+
   // 2.47 shipped with a corrupted CHM file (bug #1129). This minimal verification command exists because the !searchparse hack we added does not work with codepage 936!
   if (line.gettoken_enum(1, _T("verifychm\0")) == 0)
   {
     struct { UINT32 Sig, Ver, cbH; } chm;
     NIStream f;
-    bool valid = f.OpenFileForReading(line.gettoken_str(2));
+    bool valid = f.OpenFileForReading(line.gettoken_str(2), NStreamEncoding::BINARY);
     valid = valid && 12 == f.ReadOctets(&chm, 12);
     valid = valid && FIX_ENDIAN_INT32(chm.Sig) == 0x46535449 && (FIX_ENDIAN_INT32(chm.Ver)|1) == 3; // 'ITSF' v2..3
     return valid ? rvSucc : (ERROR_MSG(_T("Error: Invalid format\n")), PS_ERROR);

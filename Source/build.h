@@ -51,6 +51,7 @@
 #include "czlib.h"
 #include "cbzip2.h"
 #include "clzma.h"
+#include "czstd.h"
 #endif //~ NSIS_CONFIG_COMPRESSION_SUPPORT
 
 #ifdef NSIS_CONFIG_PLUGIN_SUPPORT
@@ -71,6 +72,7 @@ typedef enum {
   //DE_PP_VERBOSE_BAD_LEVEL = 4000?,
   //DW_STALE_TEMP = 5020?, TODO: There is currently no way to disable this
   DW_PACKHDR_RETNONZERO = 5021,
+  DW_BADFORMAT_EXTERNAL_FILE = 5040,
   DW_UNSUPP_STORE_FILE_ATT = 5050,
   //DW_CMDLINE_UNSUPP = 5200?,
   //DW_CMDLINE_UNSUPP_WIN = 5201?,
@@ -582,6 +584,7 @@ class CEXEBuild {
     CZlib zlib_compressor;
     CBzip2 bzip2_compressor;
     CLZMA lzma_compressor;
+    CZstd zstd_compressor;
 #endif
     bool build_compressor_set;
     bool build_compressor_final;
