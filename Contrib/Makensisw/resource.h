@@ -14,10 +14,6 @@
 #define IDS_EDITSCRIPT                  10
 #define IDS_BROWSESCR                   11
 #define IDS_CLEARLOG                    12
-#define IDS_NSISHOME                    13
-#define IDS_FORUM                       15
-#define IDS_NSISUPDATE                  16
-#define IDS_DOCS                        17
 #define IDS_SCRIPT                      18
 #define IDS_ZLIB                        19
 #define IDS_ZLIB_SOLID                  20
@@ -124,20 +120,24 @@
 #define IDM_ZLIB_SOLID                  527
 #define IDM_BZIP2                       528
 #define IDM_BZIP2_SOLID                 529
-#define IDM_ZSTD                        530
-#define IDM_ZSTD_SOLID                  531
-#define IDM_LZMA                        532
-#define IDM_LZMA_SOLID                  533
-#define IDM_BEST                        534
-#define IDM_RECOMPILE_TEST              535
-#define IDM_CANCEL                      536
-#define IDM_SETTINGS                    537
-#define IDM_WNDSPY                      538
-#define IDM_COPY                        539
-#define IDM_UI_SWITCHOWNEDWINDOW        540 // Alt+F6
-#define IDM_UI_SWITCHSECTION            541 // F6
-#define IDM_GUIDGEN                     542
-#define IDM_LOOKUP                      543
+#define IDM_LZMA                        530
+#define IDM_LZMA_SOLID                  531
+#define IDM_BEST                        532
+#define IDM_RECOMPILE_TEST              533
+#define IDM_CANCEL                      534
+#define IDM_SETTINGS                    535
+#define IDM_WNDSPY                      536
+#define IDM_COPY                        537
+#define IDM_UI_SWITCHOWNEDWINDOW        538 // Alt+F6
+#define IDM_UI_SWITCHSECTION            539 // F6
+#define IDM_GUIDGEN                     540
+#define IDM_LOOKUP                      541
+#define IDM_ZOOM_INC                    542
+#define IDM_ZOOM_DEC                    543
+#define IDM_ZOOM_RST                    544
+
+#define IDM_ZSTD                        545
+#define IDM_ZSTD_SOLID                  546
 
 
 // Next default values for new objects
@@ -145,7 +145,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        138
-#define _APS_NEXT_COMMAND_VALUE         544
+#define _APS_NEXT_COMMAND_VALUE         547
 #define _APS_NEXT_CONTROL_VALUE         241
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

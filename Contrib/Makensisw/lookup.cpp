@@ -64,11 +64,13 @@ template<class T> static ULARGE_INTEGER PathParseIconLocationEx(T*Path)
   return (li.HighPart = (UINT) comma, li.LowPart = idx, li);
 }
 
+#ifndef _WIN64
 static int WINAPI PathParseIconLocationFallback(LPSTR Path)
 {
   ULARGE_INTEGER li = PathParseIconLocationEx(Path);
   return li.LowPart;
 }
+#endif
 
 static HRESULT GetSpecialFolderPath(HWND hWnd, LPTSTR Buf, UINT csidl)
 {
@@ -179,6 +181,9 @@ static INT_PTR CALLBACK LookupDlgProc(HWND hDlg, UINT Msg, WPARAM WParam, LPARAM
 
   switch(Msg)
   {
+  case WM_SIZE:
+    if (WParam == SIZE_MAXIMIZED) ShowWindow(hDlg, SW_SHOWNOACTIVATE); // Disallow STARTF_USESHOWWINDOW+SW_MAXIMIZE
+    break;
   case WM_INITDIALOG:
     DIALOGDATA::Set(hDlg, (pDD = (DIALOGDATA*) LParam));
     CenterOnParent(hDlg);
