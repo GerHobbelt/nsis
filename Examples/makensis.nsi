@@ -333,6 +333,7 @@ ${MementoSection} "Script Examples" SecExample
   File ..\Examples\WordFunc.ini
   File ..\Examples\WordFuncTest.nsi
   File ..\Examples\Memento.nsi
+  File ..\Examples\MultiUser.nsi
   File ..\Examples\unicode.nsi
   File ..\Examples\NSISMenu.nsi
 

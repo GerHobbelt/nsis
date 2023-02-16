@@ -16,6 +16,7 @@ examples = Split("""
 	makensis-fork.nsi
 	Memento.nsi
 	ModernXL.nsi
+	MultiUser.nsi
 	NSISMenu.nsi
 	one-section.nsi
 	primes.nsi

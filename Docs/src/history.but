@@ -14,7 +14,7 @@ Released on ????, 20??
 
 \b Added \R{assert}{!assert}
 
-\b Fixed \cw{!uninstfinalize} bug on large uninstallers
+\b Fixed \cw{!uninstfinalize} bug on large uninstallers (\W{http://sf.net/p/nsis/bugs/1279}{bug #1279})
 
 \b Fixed creation of missing special folders on old Windows versions where SHGetFolderPath is not available.
 
@@ -29,6 +29,8 @@ Released on ????, 20??
 \S2{} Translations
 
 \b Updated Brazilian Portuguese (\W{http://sf.net/p/nsis/bugs/1269}{bug #1269})
+
+\b Updated Ukrainian (\W{http://sf.net/p/nsis/patches/308}{patch #308})
 
 \S2{} Build System
 
