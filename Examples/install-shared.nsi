@@ -21,13 +21,16 @@ RequestExecutionLevel Admin ; Request admin rights on WinVista+ (when UAC is tur
 InstallDir "$ProgramFiles\$(^Name)"
 InstallDirRegKey HKLM "${REGPATH_UNINSTSUBKEY}" "UninstallString"
 
+!include LogicLib.nsh
+!include Integration.nsh
+
+
 Page Directory
 Page InstFiles
 
 Uninstpage UninstConfirm
 Uninstpage InstFiles
 
-!include LogicLib.nsh
 
 !macro EnsureAdminRights
   UserInfo::GetAccountType
@@ -56,14 +59,16 @@ Section "Program files (Required)"
   SetOutPath $InstDir
   WriteUninstaller "$InstDir\Uninst.exe"
   WriteRegStr HKLM "${REGPATH_UNINSTSUBKEY}" "DisplayName" "${NAME}"
+  WriteRegStr HKLM "${REGPATH_UNINSTSUBKEY}" "DisplayIcon" "$InstDir\MyApp.exe,0"
   WriteRegStr HKLM "${REGPATH_UNINSTSUBKEY}" "UninstallString" '"$InstDir\Uninst.exe"'
+  WriteRegStr HKLM "${REGPATH_UNINSTSUBKEY}" "QuietUninstallString" '"$InstDir\Uninst.exe" /S'
   WriteRegDWORD HKLM "${REGPATH_UNINSTSUBKEY}" "NoModify" 1
   WriteRegDWORD HKLM "${REGPATH_UNINSTSUBKEY}" "NoRepair" 1
 
-  File "/oname=$InstDir\MyApp.exe" "${NSISDIR}\Bin\MakeLangId.exe" ; Pretend that we have a real application to install
-
-  ;WriteRegStr HKLM "Software\Classes\.myfileext" "myfiletype"
-  ;WriteRegStr HKLM "Software\Classes\myfiletype\shell\myapp\command" "" '"$InstDir\MyApp.exe" "%1"'
+  !tempfile APP
+  !makensis '-v2 "-DOUTFILE=${APP}" "-DNAME=NSISSharedAppExample" -DCOMPANY=Nullsoft "AppGen.nsi"' = 0
+  File "/oname=$InstDir\MyApp.exe" "${APP}" ; Pretend that we have a real application to install
+  !delfile "${APP}"
 SectionEnd
 
 Section "Start Menu shortcut"
@@ -71,14 +76,20 @@ Section "Start Menu shortcut"
 SectionEnd
 
 
+!macro DeleteFileOrAskAbort path
+  ClearErrors
+  Delete "${path}"
+  IfErrors 0 +3
+    MessageBox MB_ABORTRETRYIGNORE|MB_ICONSTOP 'Unable to delete "${path}"!' IDRETRY -3 IDIGNORE +2
+    Abort "Aborted"
+!macroend
+
 Section -Uninstall
-  Delete "$InstDir\MyApp.exe"
+  !insertmacro DeleteFileOrAskAbort "$InstDir\MyApp.exe"
   Delete "$InstDir\Uninst.exe"
   RMDir "$InstDir"
   DeleteRegKey HKLM "${REGPATH_UNINSTSUBKEY}"
-  ;DeleteRegKey HKLM "Software\Classes\myfiletype\shell\myapp"
-  ;DeleteRegKey /IfEmpty HKLM "Software\Classes\myfiletype\shell"
-  ;DeleteRegKey /IfEmpty HKLM "Software\Classes\myfiletype"
 
+  ${UnpinShortcut} "$SMPrograms\${NAME}.lnk"
   Delete "$SMPrograms\${NAME}.lnk"
 SectionEnd

@@ -49,12 +49,7 @@ RequestExecutionLevel admin
 !include "Memento.nsh"
 !include "WordFunc.nsh"
 !include "Util.nsh"
-
-;--------------------------------
-;Definitions
-
-!define SHCNE_ASSOCCHANGED 0x8000000
-!define SHCNF_IDLIST 0
+!include "Integration.nsh"
 
 ;--------------------------------
 ;Configuration
@@ -153,7 +148,6 @@ ${MementoSection} "NSIS Core Files (required)" SecCore
 
   SectionIn 1 2 3 RO
   SetOutPath $INSTDIR
-  RMDir /r $SMPROGRAMS\NSIS
 
   IfFileExists $INSTDIR\nsisconf.nsi "" +2
   Rename $INSTDIR\nsisconf.nsi $INSTDIR\nsisconf.nsh
@@ -213,6 +207,7 @@ ${MementoSection} "NSIS Core Files (required)" SecCore
   File ..\Include\MultiUser.nsh
   File ..\Include\VB6RunTime.nsh
   File ..\Include\Util.nsh
+  File ..\Include\Integration.nsh
   File ..\Include\WinCore.nsh
 
   SetOutPath $INSTDIR\Include\Win
@@ -296,7 +291,7 @@ ${MementoSection} "NSIS Core Files (required)" SecCore
     WriteRegStr HKCR "NSIS.Header\shell\open\command" "" 'notepad.exe "%1"'
   ${EndIf}
 
-  System::Call 'Shell32::SHChangeNotify(i ${SHCNE_ASSOCCHANGED}, i ${SHCNF_IDLIST}, p0, p0)'
+  ${NotifyShell_AssocChanged}
 
 ${MementoSectionEnd}
 
@@ -311,9 +306,9 @@ ${MementoSection} "Script Examples" SecExample
   File ..\Examples\makensis.nsi
   File ..\Examples\example1.nsi
   File ..\Examples\example2.nsi
+  File ..\Examples\AppGen.nsi
   File ..\Examples\install-per-user.nsi
   File ..\Examples\install-shared.nsi
-  File ..\Examples\viewhtml.nsi
   File ..\Examples\waplugin.nsi
   File ..\Examples\bigtest.nsi
   File ..\Examples\primes.nsi
@@ -358,28 +353,15 @@ ${MementoSection} "Script Examples" SecExample
 
 ${MementoSectionEnd}
 
-!ifndef NO_STARTMENUSHORTCUTS
-${MementoSection} "Start Menu and Desktop Shortcuts" SecShortcuts
+${MementoSection} "Start Menu Shortcut" SecShortcuts
 
   SetDetailsPrint textonly
-  DetailPrint "Installing Start Menu and Desktop Shortcuts..."
+  DetailPrint "Installing Start Menu shortcut..."
   SetDetailsPrint listonly
 
-!else
-${MementoSection} "Desktop Shortcut" SecShortcuts
-
-  SetDetailsPrint textonly
-  DetailPrint "Installing Desktop Shortcut..."
-  SetDetailsPrint listonly
-
-!endif
   SectionIn 1 2
   SetOutPath $INSTDIR
-!ifndef NO_STARTMENUSHORTCUTS
   CreateShortcut "$SMPROGRAMS\NSIS${NAMESUFFIX}.lnk" "$INSTDIR\NSIS.exe"
-!endif
-
-  CreateShortcut "$DESKTOP\NSIS${NAMESUFFIX}.lnk" "$INSTDIR\NSIS.exe"
 
 ${MementoSectionEnd}
 
@@ -840,9 +822,9 @@ Section -post
   WriteRegDword HKLM "Software\NSIS" "VersionBuild" "${VER_BUILD}"
 !endif
 
-  WriteRegExpandStr HKLM "${REG_UNINST_KEY}" "UninstallString" '"$INSTDIR\uninst-nsis.exe"'
-  ;WriteRegStr HKLM "${REG_UNINST_KEY}" "QuietUninstallString" '"$INSTDIR\uninst-nsis.exe" /S' ; Ideally WACK would use this
-  WriteRegExpandStr HKLM "${REG_UNINST_KEY}" "InstallLocation" "$INSTDIR"
+  WriteRegStr HKLM "${REG_UNINST_KEY}" "UninstallString" '"$INSTDIR\uninst-nsis.exe"'
+  WriteRegStr HKLM "${REG_UNINST_KEY}" "QuietUninstallString" '"$INSTDIR\uninst-nsis.exe" /S'
+  WriteRegStr HKLM "${REG_UNINST_KEY}" "InstallLocation" "$INSTDIR"
   WriteRegStr HKLM "${REG_UNINST_KEY}" "DisplayName" "Nullsoft Install System${NAMESUFFIX}"
   WriteRegStr HKLM "${REG_UNINST_KEY}" "DisplayIcon" "$INSTDIR\uninst-nsis.exe,0"
   WriteRegStr HKLM "${REG_UNINST_KEY}" "DisplayVersion" "${VERSION}"
@@ -851,8 +833,8 @@ Section -post
   WriteRegDWORD HKLM "${REG_UNINST_KEY}" "VersionMinor" "${VER_MINOR}" ; Required by WACK
 !endif
   WriteRegStr HKLM "${REG_UNINST_KEY}" "Publisher" "Nullsoft and Contributors" ; Required by WACK
-  WriteRegStr HKLM "${REG_UNINST_KEY}" "URLInfoAbout" "http://nsis.sourceforge.net/"
-  WriteRegStr HKLM "${REG_UNINST_KEY}" "HelpLink" "http://nsis.sourceforge.net/Support"
+  WriteRegStr HKLM "${REG_UNINST_KEY}" "URLInfoAbout" "https://nsis.sourceforge.io/"
+  WriteRegStr HKLM "${REG_UNINST_KEY}" "HelpLink" "https://nsis.sourceforge.io/Support"
   WriteRegDWORD HKLM "${REG_UNINST_KEY}" "NoModify" "1"
   WriteRegDWORD HKLM "${REG_UNINST_KEY}" "NoRepair" "1"
   ${MakeARPInstallDate} $1
@@ -872,7 +854,7 @@ SectionEnd
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
   !insertmacro MUI_DESCRIPTION_TEXT ${SecCore} "The core files required to use NSIS (compiler etc.)"
   !insertmacro MUI_DESCRIPTION_TEXT ${SecExample} "Example installation scripts that show you how to use NSIS"
-  !insertmacro MUI_DESCRIPTION_TEXT ${SecShortcuts} "Adds icons to your start menu and your desktop for easy access"
+  !insertmacro MUI_DESCRIPTION_TEXT ${SecShortcuts} "Add icon to your start menu for easy access"
   !insertmacro MUI_DESCRIPTION_TEXT ${SecInterfaces} "User interface designs that can be used to change the installer look and feel"
   !insertmacro MUI_DESCRIPTION_TEXT ${SecInterfacesModernUI} "A modern user interface like the wizards of recent Windows versions"
   !insertmacro MUI_DESCRIPTION_TEXT ${SecInterfacesDefaultUI} "The default NSIS user interface which you can customize to make your own UI"
@@ -1039,7 +1021,7 @@ Function ShowReleaseNotes
   ${If} ${FileExists} $0
     Exec '"$0" mk:@MSITStore:$INSTDIR\NSIS.chm::/SectionF.1.html'
   ${Else}
-    ExecShell "" "http://nsis.sourceforge.net/Docs/AppendixF.html#F.1"
+    ExecShell "" "https://nsis.sourceforge.io/Docs/AppendixF.html#F.1"
   ${EndIf}
 FunctionEnd
 
@@ -1072,7 +1054,7 @@ Section Uninstall
   !insertmacro AssocDeleteFileExtAndProgId HKLM ".nsi" "NSIS.Script"
   !insertmacro AssocDeleteFileExtAndProgId HKLM ".nsh" "NSIS.Header"
 
-  System::Call 'Shell32::SHChangeNotify(i ${SHCNE_ASSOCCHANGED}, i ${SHCNF_IDLIST}, p0, p0)'
+  ${NotifyShell_AssocChanged}
 
   DeleteRegKey HKLM "${REG_UNINST_KEY}"
   DeleteRegKey HKLM "Software\NSIS"
@@ -1082,7 +1064,7 @@ Section Uninstall
   SetDetailsPrint listonly
 
   Delete "$SMPROGRAMS\NSIS${NAMESUFFIX}.lnk"
-  Delete "$DESKTOP\NSIS${NAMESUFFIX}.lnk"
+  Delete "$DESKTOP\NSIS${NAMESUFFIX}.lnk" ; Remove legacy shortcut
   Delete $INSTDIR\makensis.exe
   Delete $INSTDIR\makensisw.exe
   Delete $INSTDIR\NSIS.exe

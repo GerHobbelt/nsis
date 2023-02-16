@@ -37,22 +37,26 @@
 #define SupportsWNT4() ( sizeof(void*) == 4 && !DpiAwarePerMonitor() ) // NT4 does not support the MultiMon API
 #define SupportsW9X() ( sizeof(TCHAR) == 1 )
 #define SupportsW95() ( FALSE && SupportsW9X() && !DpiAwarePerMonitor() )
+#define SupportsW2000() ( sizeof(void*) == 4 )
+
+static inline bool IsWin9598ME() { return SupportsW9X() && (int) GetVersion() < 0; }
+static inline bool IsWin95() { return SupportsW95() && (GetVersion() & (0x8000FFFF & ~0x0300)) == 0x80000004; }
 
 // Defines
-#define NSIS_URL     "http://nsis.sourceforge.net/"
+#define NSIS_URL     "https://nsis.sourceforge.io/"
 #define NSIS_FORUM_URL "http://forums.winamp.com/forumdisplay.php?forumid=65"
-#define NSIS_UC_URL  "http://nsis.sourceforge.net/update.php?version="
-#define NSIS_DL_URL  "http://nsis.sourceforge.net/download/"
+#define NSIS_UC_URL  "https://nsis.sourceforge.io/update.php?version="
+#define NSIS_DL_URL  "https://nsis.sourceforge.io/download/"
 #ifdef UNICODE
-#define USAGE        _T("Usage:\r\n\r\n \x2022 File \x203a Load Script...\r\n \x2022 Drag the .nsi file into this window\r\n \x2022 Right click the .nsi file and choose \"Compile NSIS Script\"")
+#define USAGE        _T("Usage:\r\n\r\n \x2022 File \x203a Load Script...\r\n \x2022 Drag the .nsi file into this window\r\n \x2022 Right click the .nsi file and choose \"Compile NSIS Script\"\r\n")
 #else
-#define USAGE        _T("Usage:\r\n\r\n - File | Load Script...\r\n - Drag the .nsi file into this window\r\n - Right click the .nsi file and choose \"Compile NSIS Script\"")
+#define USAGE        _T("Usage:\r\n\r\n - File | Load Script...\r\n - Drag the .nsi file into this window\r\n - Right click the .nsi file and choose \"Compile NSIS Script\"\r\n")
 #endif
 #define COPYRIGHT    _T("Copyright (C) 2002 Robert Rainwater")
 #define CONTRIB      _T("Fritz Elfert, Justin Frankel, Amir Szekely, Sunil Kamath, Joost Verburg, Anders Kjersem")
-#define DONATE       _T("<A ID=\"D\">Donate</A> to support NSIS development.")
+#define DONATE       _T("<A>Donate</A> to support NSIS development.")
 #define DONATEURL    { 'h'|x,'t','t'|x,'p',':'|x,'/'|x,'/'|x,'n'|x,'s'|x,'i'|x,'s'|x,'.'|x,'s'|x,'f'|x,'.','n'|x,'e'|x,'t'|x,'/'|x,'r','/'|x,'D'|x,'o'|x,'n'|x,'a'|x,'t'|x,'e'|x,'\0' } // "Encrypted"
-#define DOCPATH      "http://nsis.sourceforge.net/Docs/"
+#define DOCPATH      "https://nsis.sourceforge.io/Docs/"
 #define LOCALDOCS    _T("\\NSIS.chm")
 #define ERRBOXTITLE  0 //_T("Error")
 #define NSISERROR    _T("Unable to intialize MakeNSIS. Please verify that makensis.exe is in the same directory as makensisw.exe.")
@@ -94,18 +98,26 @@ namespace MakensisAPI {
   extern const TCHAR* SigintEventNameFmt;
   extern const TCHAR* SigintEventNameLegacy;
 
-  enum notify_e {
+  enum datatransfer_e {
     NOTIFY_SCRIPT,
     NOTIFY_WARNING,
     NOTIFY_ERROR,
-    NOTIFY_OUTPUT
+    NOTIFY_OUTPUT,
+    PROMPT_FILEPATH
   };
   enum sndmsg_e {
     QUERYHOST = WM_APP
   };
   enum QUERYHOST_e {
-    QH_OUTPUTCHARSET = 1
+    QH_OUTPUTCHARSET = 1,
+    QH_ENABLESTDERR,
+    QH_SUPPORTEDVERSION
   };
+  typedef struct {
+    unsigned char Platform;
+    unsigned char Reserved;
+    TCHAR Path[1];
+  } PROMPT_FILEPATH_DATA;
 }
 
 typedef enum {
@@ -211,7 +223,6 @@ typedef struct NSISScriptData {
   char  *brandingv;
   TCHAR **symbols;
   int retcode;
-  bool userSelectCompressor;
   unsigned char verbosity;
   DWORD logLength;
   DWORD warnings;
@@ -255,5 +266,9 @@ typedef struct ToolTipStruct {
   HWND tip_p;
   HHOOK hook;
 } NTOOLTIP;
+
+
+extern INT_PTR ShowWndSpy(HWND hOwner);
+extern INT_PTR ShowLookupDialog(HWND hOwner);
 
 #endif

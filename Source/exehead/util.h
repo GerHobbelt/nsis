@@ -3,7 +3,7 @@
  * 
  * This file is a part of NSIS.
  * 
- * Copyright (C) 1999-2020 Nullsoft and Contributors
+ * Copyright (C) 1999-2021 Nullsoft and Contributors
  * 
  * Licensed under the zlib/libpng license (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,6 +69,7 @@ void NSISCALL myRegGetStr(HKEY root, const TCHAR *sub, const TCHAR *name, TCHAR 
 
 
 extern DWORD g_WinVer; // GetVersion()
+#define IsWin95NT4() ( sizeof(void*) == 4 && LOWORD(g_WinVer) == 0x0004 )
 #define NSIS_WINVER_WOW64FLAG ( sizeof(void*) > 4 ? ( 0 ) : ( 0x40000000 ) )
 #define IsWow64() ( sizeof(void*) > 4 ? ( FALSE ) : ( g_WinVer & NSIS_WINVER_WOW64FLAG ) )
 #define SystemSupportsAltRegView() ( sizeof(void*) > 4 ? ( TRUE ) : ( IsWow64() ) )
@@ -164,6 +165,8 @@ enum myGetProcAddressFunctions {
 #ifndef _WIN64
   MGA_GetDiskFreeSpaceEx,
   MGA_GetUserDefaultUILanguage,
+#endif
+#if !defined(_WIN64) || defined(_M_IA64)
   MGA_RegDeleteKeyEx,
 #endif
   MGA_InitiateShutdown,

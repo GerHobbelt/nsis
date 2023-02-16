@@ -3,7 +3,7 @@
  * 
  * This file is a part of NSIS.
  * 
- * Copyright (C) 1999-2020 Nullsoft and Contributors
+ * Copyright (C) 1999-2021 Nullsoft and Contributors
  * 
  * Licensed under the zlib/libpng license (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ unsigned int ExeHeadStringList::getnum() const
     for(;;)
     {
       if ((pos+=cb) >= cbList) break;
-      cb = StrLenUTF16(p+=cb) + 1, ++num;
+      cb = (StrLenUTF16(p+=cb) + 1) * 2, ++num;
     }
   }
   else

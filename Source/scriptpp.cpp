@@ -3,7 +3,7 @@
  * 
  * This file is a part of NSIS.
  * 
- * Copyright (C) 1999-2020 Nullsoft and Contributors
+ * Copyright (C) 1999-2021 Nullsoft and Contributors
  * 
  * Licensed under the zlib/libpng license (the "License");
  * you may not use this file except in compliance with the License.
@@ -991,6 +991,12 @@ int CEXEBuild::pp_define(LineParser&line)
       goto badmathsyntax;
 
     if (tc + onlyval1 != 6) goto badmathsyntax;
+  }
+  else if (!_tcsicmp(define, _T("/intfmt")))
+  {
+    if (line.getnumtokens() != 5) PRINTHELPEX(cmdnam)
+    define = line.gettoken_str(2);
+    _stprintf(value = mathbuf, line.gettoken_str(3), line.gettoken_int(4));
   }
   else
   {

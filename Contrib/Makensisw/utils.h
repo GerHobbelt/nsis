@@ -32,6 +32,14 @@
 #endif
 #define COUNTOF(a) (sizeof(a)/sizeof(a[0]))
 
+#if defined(_MSC_VER) && _MSC_VER >= 1200
+EXTERN_C IMAGE_DOS_HEADER __ImageBase;
+#define HINST_THISCOMPONENT ( (HINSTANCE) &__ImageBase )
+#define HINST_APPLICATION HINST_THISCOMPONENT
+#else
+#define HINST_APPLICATION ( (HINSTANCE) GetModuleHandle(NULL) )
+#endif
+
 #define MRU_LIST_SIZE 5
 #define MRU_DISPLAY_LENGTH 40
 #define SYMSETNAME_MAXLEN 40
@@ -64,6 +72,7 @@ void LogMessage(HWND hwnd,const TCHAR *str);
 void ErrorMessage(HWND hwnd,const TCHAR *str);
 void CenterOnParent(HWND hwnd);
 void SetDialogFocus(HWND hDlg, HWND hCtl); // Use this and not SetFocus()!
+#define DlgRet(hDlg, val) ( SetWindowLongPtr((hDlg), DWLP_MSGRESULT, (val)) | TRUE )
 HWND GetComboEdit(HWND hCB);
 #define DisableItems(hwnd) EnableDisableItems(hwnd, 0)
 #define EnableItems(hwnd) EnableDisableItems(hwnd, 1)
@@ -90,6 +99,41 @@ void BuildMRUMenus();
 void LoadMRUFile(int position);
 void ClearMRUList();
 
+struct FSPath {
+  template<class T> static inline bool IsAgnosticSeparator(const T c) { return '\\' == c || '/' == c; }
+  template<class T> static T* FindLastComponent(T*p) // Note: Returns "" for "dir\"
+  {
+    for (T *sep = 0, *start = p;; ++p)
+      if (!*p)
+        return sep ? ++sep : start;
+      else if (IsAgnosticSeparator(*p))
+        sep = p;
+  }
+};
+
+template<class T> UINT StrLenT(const T*s) { return sizeof(T) > 1 ? lstrlenW((WCHAR*) s) : lstrlenA((CHAR*) s) ; }
+template<class T> T AsciiLoCh(T ch) { return ch >= 'A' && ch <= 'Z' ? (ch | 32) : ch; }
+
+template<class A, class B> int AsciiCmpNI(const A*a, const B*b, SIZE_T len)
+{
+	int cmp = 0;
+	for (SIZE_T i = 0;; ++i)
+		if (i == len || (cmp = AsciiLoCh(a[i]) - AsciiLoCh(b[i])) || !a[i])
+			return cmp;
+}
+template<class A, class B> inline bool AsciiMatchNI(const A*a, const B*b, SIZE_T c) { return !AsciiCmpNI(a, b, c); }
+template<class A, class B> bool AsciiMatchPrefixI(const A*s, const B*p) { return AsciiMatchNI(s, p, StrLenT(p)); }
+
+template<class T> HKEY GetRegRootKey(const T*Str)
+{
+	if (AsciiMatchPrefixI(Str, "HKEY_CLASSES_ROOT") || AsciiMatchPrefixI(Str, "HKCR")) return HKEY_CLASSES_ROOT;
+	if (AsciiMatchPrefixI(Str, "HKEY_CURRENT_USER") || AsciiMatchPrefixI(Str, "HKCU")) return HKEY_CURRENT_USER;
+	if (AsciiMatchPrefixI(Str, "HKEY_LOCAL_MACHINE") || AsciiMatchPrefixI(Str, "HKLM")) return HKEY_LOCAL_MACHINE;
+	if (AsciiMatchPrefixI(Str, "HKEY_USERS") || AsciiMatchPrefixI(Str, "HKU")) return HKEY_USERS;
+	return (HKEY) NULL;
+}
+DWORD RegOpenKeyForReading(HKEY hRoot, LPCTSTR SubKey, HKEY*pKey);
+
 bool FileExists(const TCHAR *fname);
 bool OpenUrlInDefaultBrowser(HWND hwnd, LPCSTR Url);
 
@@ -106,6 +150,7 @@ inline HFONT CreateFontPt(HWND hWndDPI, int Height, WORD Weight, BYTE PitchAndFa
 {
   return CreateFont((INT_PTR) hWndDPI, CFF_DPIFROMHWND|CFF_DPIPT, Height, Weight, PitchAndFamily, CharSet, Face);
 }
+BOOL FontExists(LPCTSTR Face);
 BOOL FillRectColor(HDC hDC, const RECT &Rect, COLORREF Color);
 BOOL DrawHorzGradient(HDC hDC, LONG l, LONG t, LONG r, LONG b, COLORREF c1, COLORREF c2);
 inline long RectW(const RECT&r) { return r.right - r.left; }

@@ -3,7 +3,7 @@
  * 
  * This file is a part of NSIS.
  * 
- * Copyright (C) 1999-2020 Nullsoft and Contributors
+ * Copyright (C) 1999-2021 Nullsoft and Contributors
  * 
  * Licensed under the zlib/libpng license (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ class LineParser {
     int getnumtokens();
     void eattoken();
     int gettoken_int(int token, int *success=0) const;
+    int gettoken_intx(int token, int *success=0) const; // basic operator expressions parser
     double gettoken_float(int token, int *success=0) const;
     double gettoken_number(int token, int *success=0) const;
     int gettoken_binstrdata(int token, char*buffer, int bufcap) const;
@@ -40,6 +41,7 @@ class LineParser {
     int gettoken_enum(int token, const TCHAR *strlist); // null separated list
 
     static int parse_int(const TCHAR *str, int *success=0);
+    static int parse_intx(const TCHAR *str, int *success=0);
     static double parse_float(const TCHAR *str, int *success=0);
     static double parse_number(const TCHAR *str, int *success=0);
 
@@ -47,6 +49,7 @@ class LineParser {
 
     void freetokens();
     int doline(TCHAR *line, int ignore_escaping=0);
+    inline int validate_token_index(int token, int *success=0) const;
 
     int m_eat;
     int m_nt;

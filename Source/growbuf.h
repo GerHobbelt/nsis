@@ -3,7 +3,7 @@
  * 
  * This file is a part of NSIS.
  * 
- * Copyright (C) 1999-2020 Nullsoft and Contributors
+ * Copyright (C) 1999-2021 Nullsoft and Contributors
  * 
  * Licensed under the zlib/libpng license (the "License");
  * you may not use this file except in compliance with the License.
@@ -122,6 +122,7 @@ class GrowBuf : public IGrowBuf
 class TinyGrowBuf : public GrowBuf {
   public:
     TinyGrowBuf() : GrowBuf() { m_bs=1024; }
+    TinyGrowBuf(size_type cb) : GrowBuf() { m_bs=1024; resize(cb); }
 };
 
 #endif

@@ -3,7 +3,7 @@
  * 
  * This file is a part of NSIS.
  * 
- * Copyright (C) 1999-2020 Nullsoft and Contributors
+ * Copyright (C) 1999-2021 Nullsoft and Contributors
  * 
  * Licensed under the zlib/libpng license (the "License");
  * you may not use this file except in compliance with the License.
@@ -381,19 +381,18 @@ unsigned char* generate_uninstall_icon_data(IconGroup icon1, IconGroup icon2, si
   for (i = 0; i < icon2.size(); i++)
   {
     Icon* icon = &icon2[order[i].index2];
-    DWORD size = FIX_ENDIAN_INT32(icon->meta.dwRawSize);
+    DWORD size = icon->meta.dwRawSize;
 
-    *(LPDWORD) seeker = FIX_ENDIAN_INT32(size);
+    memcpy(seeker, &size, sizeof(size));
+    seeker += sizeof(size);
+    memset(seeker, 0, sizeof(DWORD));
     seeker += sizeof(DWORD);
-    *(LPDWORD) seeker = 0;
-    seeker += sizeof(DWORD);
-
     memcpy(seeker, icon->data, size);
-    seeker += size;
+    seeker += FIX_ENDIAN_INT32(size);
   }
 
   // add terminator
-  *(LPDWORD) seeker = 0;
+  memset(seeker, 0, sizeof(DWORD));
 
   // done
   destroy_icon_group(group);

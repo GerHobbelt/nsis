@@ -3,7 +3,7 @@
  * 
  * This file is a part of NSIS.
  * 
- * Copyright (C) 1999-2020 Nullsoft and Contributors
+ * Copyright (C) 1999-2021 Nullsoft and Contributors
  * 
  * Licensed under the zlib/libpng license (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,7 +108,7 @@ void Plugins::AddPluginsDir(const tstring &path, bool pe64, bool displayInfo)
     if (!dir_reader::matches(*files_itr, _T("*.dll")))
       continue;
 
-    const tstring plugin = path + PLATFORM_PATH_SEPARATOR_C + *files_itr;
+    const tstring plugin = get_full_path(path + PLATFORM_PATH_SEPARATOR_C + *files_itr);
     GetExports(plugin, pe64, displayInfo);
   }
 }

@@ -3,7 +3,7 @@
  * 
  * This file is a part of NSIS.
  * 
- * Copyright (C) 1999-2020 Nullsoft and Contributors
+ * Copyright (C) 1999-2021 Nullsoft and Contributors
  * 
  * Licensed under the zlib/libpng license (the "License");
  * you may not use this file except in compliance with the License.
@@ -1166,6 +1166,8 @@ struct MGA_FUNC MGA_FUNCS[] = {
 #ifndef _WIN64
   {"KERNEL32", "GetDiskFreeSpaceExW"},
   {"KERNEL32", "GetUserDefaultUILanguage"},
+#endif
+#if !defined(_WIN64) || defined(_M_IA64)
   {"ADVAPI32", "RegDeleteKeyExW"},
 #endif
   {"ADVAPI32", "InitiateShutdownW"},
