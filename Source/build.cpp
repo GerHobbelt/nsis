@@ -3,7 +3,7 @@
  * 
  * This file is a part of NSIS.
  * 
- * Copyright (C) 1999-2021 Nullsoft and Contributors
+ * Copyright (C) 1999-2022 Nullsoft and Contributors
  * 
  * Licensed under the zlib/libpng license (the "License");
  * you may not use this file except in compliance with the License.
@@ -378,7 +378,7 @@ CEXEBuild::CEXEBuild(signed char pponly, bool warnaserror) :
   m_ShellConstants.add(_T("RESOURCES_LOCALIZED"), CSIDL_RESOURCES_LOCALIZED, CSIDL_RESOURCES_LOCALIZED);
   m_ShellConstants.add(_T("CDBURN_AREA"), CSIDL_CDBURN_AREA, CSIDL_CDBURN_AREA);
 
-  // Contants that are not affected by SetShellVarContext
+  // Constants that are not affected by SetShellVarContext
   m_ShellConstants.add(_T("USERAPPDATA"), CSIDL_APPDATA, CSIDL_APPDATA);
   m_ShellConstants.add(_T("USERLOCALAPPDATA"), CSIDL_LOCAL_APPDATA, CSIDL_LOCAL_APPDATA);
   m_ShellConstants.add(_T("USERTEMPLATES"), CSIDL_TEMPLATES, CSIDL_TEMPLATES);
@@ -632,7 +632,7 @@ int CEXEBuild::preprocess_string(TCHAR *out, const TCHAR *in, WORD codepage/*=CP
             int idxUserVar = m_UserVarNames.get(p, truncate_cast(int, (size_t)(pUserVarName - p)));
             if (idxUserVar >= 0)
             {
-              // Well, using variables inside string formating doens't mean
+              // Well, using variables inside string formatting doesn't mean
               // using the variable, because it will be always an empty string
               // which is also memory wasting
               // So the line below must be commented !??
@@ -3715,7 +3715,7 @@ bool CEXEBuild::prompt_for_output_path(TCHAR*path, UINT pathcap) const
     }
   };
   size_t io[] = { false, (size_t) path, pathcap }, cb;
-  TinyGrowBuf inputbuf((IGrowBuf::size_type) (cb = FIELD_OFFSET(PROMPT_FILEPATH_DATA, Path[pathcap])));
+  TinyGrowBuf inputbuf((IGrowBuf::size_type) (cb = FIELD_OFFSET(PROMPT_FILEPATH_DATA, Path) + pathcap));
   PROMPT_FILEPATH_DATA *p = (PROMPT_FILEPATH_DATA*) inputbuf.get();
   p->Platform = (sizeof(void*) * 8) | sizeof(TCHAR), p->Reserved = 0;
   _tcscpy(p->Path, path);
@@ -3897,7 +3897,7 @@ int CEXEBuild::DeclaredUserVar(const TCHAR *szVarName)
     {
       if (!isSimpleChar(*pVarName))
       {
-        ERROR_MSG(_T("Error: invalid characters in variable name \"%") NPRIs _T("\", use only characters [a-z][A-Z][0-9] and '_'\n"), szVarName);
+        ERROR_MSG(_T("Error: invalid characters in variable name \"%") NPRIs _T("\", use only characters [a-z][A-Z][0-9], '.' and '_'\n"), szVarName);
         return PS_ERROR;
       }
       pVarName++;
