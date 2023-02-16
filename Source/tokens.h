@@ -3,7 +3,7 @@
  * 
  * This file is a part of NSIS.
  * 
- * Copyright (C) 1999-2019 Nullsoft and Contributors
+ * Copyright (C) 1999-2020 Nullsoft and Contributors
  * 
  * Licensed under the zlib/libpng license (the "License");
  * you may not use this file except in compliance with the License.
@@ -148,6 +148,7 @@ enum
   // section/function stuff
   TOK_SECTION,
   TOK_SECTIONEND,
+  TOK_SECTIONINSTTYPE,
   TOK_SECTIONIN,
   TOK_SECTIONGROUP,
   TOK_SECTIONGROUPEND,
@@ -279,6 +280,7 @@ enum
 #endif
   TOK_FILESEEK,
   TOK_GETFULLPATHNAME,
+  TOK_GETKNOWNFOLDERPATH,
   TOK_REBOOT,
   TOK_IFREBOOTFLAG,
   TOK_SETREBOOTFLAG,
@@ -299,8 +301,12 @@ enum
   TOK_INSTTYPEGETTEXT,
   TOK_GETCURINSTTYPE,
   TOK_SETCURINSTTYPE,
+  TOK_GETREGVIEW,
   TOK_SETREGVIEW,
+  TOK_IFALTREGVIEW,
+  TOK_GETSHELLVARCONTEXT,
   TOK_SETSHELLVARCONTEXT,
+  TOK_IFSHELLVARCONTEXTALL,
   TOK_PLUGINDIR,
   TOK_INITPLUGINSDIR,
   TOK_CREATEFONT,
@@ -310,6 +316,7 @@ enum
   TOK_IFSILENT,
   TOK_SETERRORLEVEL,
   TOK_GETERRORLEVEL,
+  TOK_IFRTLLANG,
   TOK_LOCKWINDOW,
 
   TOK__LAST,

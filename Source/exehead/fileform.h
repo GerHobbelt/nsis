@@ -3,7 +3,7 @@
  * 
  * This file is a part of NSIS.
  * 
- * Copyright (C) 1999-2019 Nullsoft and Contributors
+ * Copyright (C) 1999-2020 Nullsoft and Contributors
  * 
  * Licensed under the zlib/libpng license (the "License");
  * you may not use this file except in compliance with the License.
@@ -193,9 +193,8 @@ enum
                         // InstTypeGetFlags:  3: [idx, 1, output]
 #endif
 
-  // instructions not actually implemented in exehead, but used in compiler.
-  EW_GETLABELADDR,      // both of these get converted to EW_ASSIGNVAR
-  EW_GETFUNCTIONADDR,
+  EW_GETOSINFO,         // 1+ [operation, ...]
+  EW_RESERVEDOPCODE,    // Free slot, feel free to use it for something
 
 #ifdef NSIS_LOCKWINDOW_SUPPORT
   EW_LOCKWINDOW,
@@ -207,6 +206,10 @@ enum
   EW_FGETWS,            // FileReadUTF16LE: 4 [handle, output, maxlen, ?getchar:gets]
 #endif//NSIS_SUPPORT_FILEFUNCTIONS
 #endif
+
+  // Opcodes listed here are not actually used in exehead. No exehead opcodes should be present after these!
+  EW_GETLABELADDR,      // --> EW_ASSIGNVAR
+  EW_GETFUNCTIONADDR,   // --> EW_ASSIGNVAR
 };
 
 #pragma pack(push, 1) // fileform.cpp assumes no padding/alignment

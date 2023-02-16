@@ -3,7 +3,7 @@
  * 
  * This file is a part of NSIS.
  * 
- * Copyright (C) 1999-2019 Nullsoft and Contributors
+ * Copyright (C) 1999-2020 Nullsoft and Contributors
  * 
  * Licensed under the zlib/libpng license (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,6 +60,7 @@ inline tstring& path_append(tstring& base, const tstring& more) { return path_ap
 inline bool IsAgnosticPathSeparator(const TCHAR c) { return _T('\\') == c || _T('/') == c; }
 bool IsWindowsPathRelative(const TCHAR *p);
 
+tstring replace_all(const TCHAR*str, const TCHAR*find, const TCHAR* replace);
 tstring lowercase(const tstring&);
 tstring get_string_prefix(const tstring& str, const tstring& separator);
 tstring get_string_suffix(const tstring& str, const tstring& separator);

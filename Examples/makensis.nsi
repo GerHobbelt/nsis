@@ -311,6 +311,8 @@ ${MementoSection} "Script Examples" SecExample
   File ..\Examples\makensis.nsi
   File ..\Examples\example1.nsi
   File ..\Examples\example2.nsi
+  File ..\Examples\install-per-user.nsi
+  File ..\Examples\install-shared.nsi
   File ..\Examples\viewhtml.nsi
   File ..\Examples\waplugin.nsi
   File ..\Examples\bigtest.nsi
@@ -321,7 +323,6 @@ ${MementoSection} "Script Examples" SecExample
   File ..\Examples\languages.nsi
   File ..\Examples\Library.nsi
   File ..\Examples\VersionInfo.nsi
-  File ..\Examples\UserVars.nsi
   File ..\Examples\LogicLib.nsi
   File ..\Examples\silent.nsi
   File ..\Examples\StrFunc.nsi

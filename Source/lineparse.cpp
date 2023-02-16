@@ -3,7 +3,7 @@
  * 
  * This file is a part of NSIS.
  * 
- * Copyright (C) 1999-2019 Nullsoft and Contributors
+ * Copyright (C) 1999-2020 Nullsoft and Contributors
  * 
  * Licensed under the zlib/libpng license (the "License");
  * you may not use this file except in compliance with the License.
@@ -199,7 +199,7 @@ int LineParser::gettoken_binstrdata(int token, char*buffer, int bufcap) const
 TCHAR* LineParser::gettoken_str(int token) const
 {
   token+=m_eat;
-  if (token < 0 || token >= m_nt) return (TCHAR*) _T("");
+  if (token < 0 || token >= m_nt) return const_cast<TCHAR*>(_T(""));
   return m_tokens[token];
 }
 

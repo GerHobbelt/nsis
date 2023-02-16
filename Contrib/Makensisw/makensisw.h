@@ -43,7 +43,11 @@
 #define NSIS_FORUM_URL "http://forums.winamp.com/forumdisplay.php?forumid=65"
 #define NSIS_UC_URL  "http://nsis.sourceforge.net/update.php?version="
 #define NSIS_DL_URL  "http://nsis.sourceforge.net/download/"
+#ifdef UNICODE
+#define USAGE        _T("Usage:\r\n\r\n \x2022 File \x203a Load Script...\r\n \x2022 Drag the .nsi file into this window\r\n \x2022 Right click the .nsi file and choose \"Compile NSIS Script\"")
+#else
 #define USAGE        _T("Usage:\r\n\r\n - File | Load Script...\r\n - Drag the .nsi file into this window\r\n - Right click the .nsi file and choose \"Compile NSIS Script\"")
+#endif
 #define COPYRIGHT    _T("Copyright (C) 2002 Robert Rainwater")
 #define CONTRIB      _T("Fritz Elfert, Justin Frankel, Amir Szekely, Sunil Kamath, Joost Verburg, Anders Kjersem")
 #define DONATE       _T("<A ID=\"D\">Donate</A> to support NSIS development.")
@@ -62,6 +66,7 @@
 #define REGLOC       _T("MakeNSISWPlacement")
 #define REGVERBOSITY _T("MakeNSISWVerbosity")
 #define REGCOMPRESSOR _T("MakeNSISWCompressor")
+#define REGCOLORIZE  _T("MakeNSISWColorize")
 #define REGSYMSUBKEY _T("Symbols")
 #define REGMRUSUBKEY _T("MRU")
 #define EXENAME      _T("makensis.exe")

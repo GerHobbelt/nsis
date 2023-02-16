@@ -3,7 +3,7 @@
  * 
  * This file is a part of NSIS.
  * 
- * Copyright (C) 1999-2019 Nullsoft and Contributors
+ * Copyright (C) 1999-2020 Nullsoft and Contributors
  * 
  * Licensed under the zlib/libpng license (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ namespace manifest
   enum flags
   {
     disablewindowfiltering = 0x01, // Win8+ (Allow EnumWindows() to return Windows 8 immersive apps)
-    gdiscaling = 0x02, // Win10FU1703+
+    gdiscaling = 0x02, // Win10FU1703+ blogs.windows.com/windowsdeveloper/2017/05/19/improving-high-dpi-experience-gdi-based-desktop-apps/
     flags_default = 0
   };
 

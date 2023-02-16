@@ -3,7 +3,7 @@
  * 
  * This file is a part of NSIS.
  * 
- * Copyright (C) 1999-2019 Nullsoft and Contributors
+ * Copyright (C) 1999-2020 Nullsoft and Contributors
  * 
  * Licensed under the zlib/libpng license (the "License");
  * you may not use this file except in compliance with the License.
@@ -878,6 +878,16 @@ bool IsWindowsPathRelative(const TCHAR *p)
 {
   if (_T('\\') == p[0]) return _T('\\') != p[1]; // Current drive relative, not (unverified) UNC
   return PathGetDosDriveNumber(p) < 0;
+}
+
+tstring replace_all(const TCHAR *str, const TCHAR *find, const TCHAR *repl)
+{
+  tstring out = str;
+  for (size_t cchF = _tcslen(find), cchR = _tcslen(repl), i = 0; ; i += cchR)
+    if ((i = out.find(find, i)) == tstring::npos)
+      return out;
+    else
+      out.replace(i, cchF, repl);
 }
 
 struct ToLower

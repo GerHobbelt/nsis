@@ -3,7 +3,7 @@
  * 
  * This file is a part of NSIS.
  * 
- * Copyright (C) 1999-2019 Nullsoft and Contributors
+ * Copyright (C) 1999-2020 Nullsoft and Contributors
  * 
  * Licensed under the zlib/libpng license (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,6 +110,7 @@ static tokenType tokenlist[TOK__LAST] =
 {TOK_GETDLGITEM,_T("GetDlgItem"),3,0,_T("$(user_var: handle output) dialog item_id"),TP_CODE},
 {TOK_GETFULLPATHNAME,_T("GetFullPathName"),2,1,_T("[/SHORT] $(user_var: result) path_or_file"),TP_CODE},
 {TOK_GETTEMPFILENAME,_T("GetTempFileName"),1,1,_T("$(user_var: name output) [base_dir]"),TP_CODE},
+{TOK_GETKNOWNFOLDERPATH,_T("GetKnownFolderPath"),2,0,_T("$(user_var: result) knownfolderid"),TP_CODE},
 {TOK_HIDEWINDOW,_T("HideWindow"),0,0,_T(""),TP_CODE},
 {TOK_ICON,_T("Icon"),1,0,_T("local_icon.ico"),TP_GLOBAL},
 {TOK_IFABORT,_T("IfAbort"),1,1,_T("label_to_goto_if_abort [label_to_goto_if_no_abort]"),TP_CODE},
@@ -117,11 +118,12 @@ static tokenType tokenlist[TOK__LAST] =
 {TOK_IFFILEEXISTS,_T("IfFileExists"),2,1,_T("filename label_to_goto_if_file_exists [label_to_goto_otherwise]"),TP_CODE},
 {TOK_IFREBOOTFLAG,_T("IfRebootFlag"),1,1,_T("jump_if_set [jump_if_not_set]"),TP_CODE},
 {TOK_IFSILENT,_T("IfSilent"),1,1,_T("jump_if_silent [jump_if_not_silent]"),TP_CODE},
+{TOK_IFRTLLANG,_T("IfRtlLanguage"),1,1,_T("goto_true [goto_false]"),TP_CODE},
 {TOK_INSTALLDIRREGKEY,_T("InstallDirRegKey"),3,0,_T("root_key subkey entry_name\n    root_key=(HKCR|HKLM|HKCU|HKU|HKCC|HKDD|HKPD)"),TP_GLOBAL},
 {TOK_INSTCOLORS,_T("InstallColors"),1,1,_T("(/windows | (foreground_color background_color))"),TP_GLOBAL},
 {TOK_INSTDIR,_T("InstallDir"),1,0,_T("default_install_directory"),TP_GLOBAL},
 {TOK_INSTPROGRESSFLAGS,_T("InstProgressFlags"),0,-1,_T("[flag [...]]\n    flag={smooth|colored}"),TP_GLOBAL},
-{TOK_INSTTYPE,_T("InstType"),1,0,_T("[un.]install_type_name | /NOCUSTOM | /CUSTOMSTRING=str | /COMPONENTSONLYONCUSTOM"),TP_GLOBAL},
+{TOK_INSTTYPE,_T("InstType"),1,1,_T("[un.]install_type_name [index_output] | /NOCUSTOM | /CUSTOMSTRING=str | /COMPONENTSONLYONCUSTOM"),TP_GLOBAL},
 {TOK_INTOP,_T("IntOp"),3,1,_T("$(user_var: result) val1 OP [val2]\n    OP=(+ - * / % | & ^ ~ ! || && << >> >>>)"),TP_CODE},
 {TOK_INTPTROP,_T("IntPtrOp"),3,1,_T("$(user_var: result) val1 OP [val2]"),TP_CODE},
 {TOK_INTCMP,_T("IntCmp"),3,2,_T("val1 val2 jump_if_equal [jump_if_val1_less] [jump_if_val1_more]"),TP_CODE},
@@ -171,6 +173,7 @@ static tokenType tokenlist[TOK__LAST] =
 {TOK_RMDIR,_T("RMDir"),1,2,_T("[/r] [/REBOOTOK] directory_name"),TP_CODE},
 {TOK_SECTION,_T("Section"),0,3,_T("[/o] [-][un.][section_name] [section index output]"),TP_GLOBAL},
 {TOK_SECTIONEND,_T("SectionEnd"),0,0,_T(""),TP_SEC},
+{TOK_SECTIONINSTTYPE,_T("SectionInstType"),1,-1,_T("InstTypeIdx [InstTypeIdx [...]]"),TP_SEC},
 {TOK_SECTIONIN,_T("SectionIn"),1,-1,_T("InstTypeIdx [InstTypeIdx [...]]"),TP_SEC},
 {TOK_SUBSECTION,_T("SubSection"),1,2,_T("deprecated - use SectionGroup"),TP_GLOBAL},
 {TOK_SECTIONGROUP,_T("SectionGroup"),1,2,_T("[/e] [un.]section_group_name [section index output]"),TP_GLOBAL},
@@ -210,8 +213,12 @@ static tokenType tokenlist[TOK__LAST] =
 {TOK_SETOVERWRITE,_T("SetOverwrite"),1,0,_T("on|off|try|ifnewer|ifdiff"),TP_ALL},
 {TOK_SETPLUGINUNLOAD,_T("SetPluginUnload"),1,0,_T("deprecated - plug-ins should handle this on their own"),TP_ALL},
 {TOK_SETREBOOTFLAG,_T("SetRebootFlag"),1,0,_T("true|false"),TP_CODE},
+{TOK_GETREGVIEW,_T("GetRegView"),1,0,_T("$(user_var: output)"),TP_CODE},
 {TOK_SETREGVIEW,_T("SetRegView"),1,0,_T("32|64|default|lastused"),TP_CODE},
+{TOK_IFALTREGVIEW,_T("IfAltRegView"),1,1,_T("goto_true [goto_false]"),TP_CODE},
+{TOK_GETSHELLVARCONTEXT,_T("GetShellVarContext"),1,0,_T("$(user_var: output)"),TP_CODE},
 {TOK_SETSHELLVARCONTEXT,_T("SetShellVarContext"),1,0,_T("all|current"),TP_CODE},
+{TOK_IFSHELLVARCONTEXTALL,_T("IfShellVarContextAll"),1,1,_T("goto_true [goto_false]"),TP_CODE},
 {TOK_SETSILENT,_T("SetSilent"),1,0,_T("silent|normal"),TP_CODE},
 {TOK_SHOWDETAILS,_T("ShowInstDetails"),1,0,_T("(hide|show|nevershow)"),TP_GLOBAL},
 {TOK_SHOWDETAILSUNINST,_T("ShowUninstDetails"),1,0,_T("(hide|show|nevershow)"),TP_GLOBAL},

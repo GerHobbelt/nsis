@@ -3,7 +3,7 @@
  * 
  * This file is a part of NSIS.
  * 
- * Copyright (C) 1999-2019 Nullsoft and Contributors
+ * Copyright (C) 1999-2020 Nullsoft and Contributors
  * 
  * Licensed under the zlib/libpng license (the "License");
  * you may not use this file except in compliance with the License.
@@ -327,6 +327,7 @@ class CEXEBuild {
     int doParse(const TCHAR *str);
     int doCommand(int which_token, LineParser &line);
     TCHAR m_templinebuf[MAX_LINELENGTH]; // Buffer used by parseScript() & doCommand(), not recursion safe!
+    int add_flag_instruction_entry(int which_token, int opcode, LineParser &line, int offset, int data = 0);
 
     int do_add_file(const TCHAR *lgss, int attrib, int recurse, int *total_files, const TCHAR 
       *name_override=0, int generatecode=1, int *data_handle=0, 
@@ -508,7 +509,7 @@ class CEXEBuild {
      * a PS_ERROR.  If this function call is overwriting a set user string,
      * this will return a PS_WARNING.
      */
-    int SetInnerString(int id, TCHAR *str);
+    int SetInnerString(int id, const TCHAR *str);
 
     int GenerateLangTable(LanguageTable *lt, int num_lang_tables);
     int GenerateLangTables();

@@ -3,7 +3,7 @@
  * 
  * This file is a part of NSIS.
  * 
- * Copyright (C) 1999-2019 Nullsoft and Contributors
+ * Copyright (C) 1999-2020 Nullsoft and Contributors
  * 
  * Licensed under the zlib/libpng license (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,20 @@ TCHAR * NSISCALL mystrcpy(TCHAR *out, const TCHAR *in);
 int NSISCALL mystrlen(const TCHAR *in);
 TCHAR * NSISCALL mystrcat(TCHAR *out, const TCHAR *concat);
 TCHAR * NSISCALL mystrstr(TCHAR *a, TCHAR *b);
+int StrWideToACP(LPCWSTR Src, char* Dst, int DstCap);
+#ifdef UNICODE
+#define strcpyWideToT mystrcpy
+#else
+void strcpyWideToT(TCHAR *out, LPCWSTR in);
+#endif
 
+#ifdef _WIN64
+#define ComIIDFromString(s,out) SHCLSIDFromString((s),(CLSID*)(out))
+#elif defined(UNICODE)
+#define ComIIDFromString(s,out) IIDFromString((s), (IID*)(out))
+#else
+HRESULT ComIIDFromString(LPCTSTR str, IID*out);
+#endif
 
 #ifndef KEY_CREATE_LINK
 #define KEY_CREATE_LINK 0x0020
@@ -154,6 +167,7 @@ enum myGetProcAddressFunctions {
   MGA_RegDeleteKeyEx,
 #endif
   MGA_InitiateShutdown,
+  MGA_SHGetKnownFolderPath,
   MGA_IsUserAnAdmin,
 #ifndef _WIN64
   MGA_IsOS,

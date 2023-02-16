@@ -3,7 +3,7 @@
  * 
  * This file is a part of NSIS.
  * 
- * Copyright (C) 1999-2019 Nullsoft and Contributors
+ * Copyright (C) 1999-2020 Nullsoft and Contributors
  * 
  * Licensed under the zlib/libpng license (the "License");
  * you may not use this file except in compliance with the License.
@@ -517,7 +517,7 @@ int CEXEBuild::SetLangString(const TCHAR *name, LANGID lang, const TCHAR *str)
 // @return If the id is invalid or the string is not valid, it will return a
 // PS_ERROR.  If this function call is overwriting a set user string, this
 // will return a PS_WARNING.
-int CEXEBuild::SetInnerString(int id, TCHAR *str) {
+int CEXEBuild::SetInnerString(int id, const TCHAR *str) {
   if ((unsigned int)id >= NLF_STRINGS || !str) return PS_ERROR;
 
   int ret = PS_OK;

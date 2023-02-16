@@ -55,7 +55,10 @@ typedef BYTE PACKEDCMDID_T;
 
 int SetArgv(const TCHAR *cmdLine, TCHAR ***argv);
 void SetTitle(HWND hwnd,const TCHAR *substr);
+void PlayAppSoundAsync(LPCSTR SoundName, int MBFallback = -1);
 void CopyToClipboard(HWND hwnd);
+enum LOGCOLOR { LC_SUCCESS, LC_WARNING, LC_ERROR, LC_SYSCOLOR };
+void SetLogColor(enum LOGCOLOR lc);
 void ClearLog(HWND hwnd);
 void LogMessage(HWND hwnd,const TCHAR *str);
 void ErrorMessage(HWND hwnd,const TCHAR *str);
@@ -103,11 +106,13 @@ inline HFONT CreateFontPt(HWND hWndDPI, int Height, WORD Weight, BYTE PitchAndFa
 {
   return CreateFont((INT_PTR) hWndDPI, CFF_DPIFROMHWND|CFF_DPIPT, Height, Weight, PitchAndFamily, CharSet, Face);
 }
+BOOL FillRectColor(HDC hDC, const RECT &Rect, COLORREF Color);
 BOOL DrawHorzGradient(HDC hDC, LONG l, LONG t, LONG r, LONG b, COLORREF c1, COLORREF c2);
 inline long RectW(const RECT&r) { return r.right - r.left; }
 inline long RectH(const RECT&r) { return r.bottom - r.top; }
 long DlgUnitToPixelX(HWND hDlg, long x);
 long DlgUnitToPixelY(HWND hDlg, long y);
+UINT DpiGetForMonitor(HWND hWnd);
 UINT DpiGetForWindow(HWND hWnd);
 int DpiScaleY(HWND hWnd, int Val);
 
