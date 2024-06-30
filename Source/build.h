@@ -227,6 +227,7 @@ class CEXEBuild {
       MAX_MACRORECURSION = 50
     };
     static const TCHAR* get_commandlinecode_filename() { return _T("<command line>"); }
+    static const TCHAR* get_memorycode_filename() { return _T("<memory>"); }
 
     void warning(DIAGCODE dc, const TCHAR *s, ...); // to add a warning to the compiler's warning list.
     void warning_fl(DIAGCODE dc, const TCHAR *s, ...); // warning with file name and line number
@@ -259,7 +260,8 @@ class CEXEBuild {
     // process a script (you can process as many scripts as you want,
     // it is as if they are concatenated)
     int process_script(NIStream&Strm, const TCHAR *filename);
-    int process_oneline(const TCHAR *line, const TCHAR *curfilename, int lineptr);
+    enum PROCESSLINEFLAGS { PLF_MACRO = 0x01, PLF_VIRTUALFILE = 0x02 };
+    int process_oneline(const TCHAR *line, const TCHAR *curfilename, int lineptr, unsigned int plflags);
     
     // you only get to call write_output once, so use it wisely.
     int write_output(void);
@@ -332,6 +334,7 @@ class CEXEBuild {
 #endif
     int parseScript();
     int includeScript(const TCHAR *f, NStreamEncoding&enc);
+    int includeScriptLines(const TCHAR *start, const TCHAR *end, const TCHAR *name);
     TCHAR* GetMacro(const TCHAR *macroname, TCHAR**macroend = 0);
     TCHAR* GetMacro(size_t idx);
     bool MacroExists(const TCHAR *macroname) { return !!GetMacro(macroname); }
@@ -385,6 +388,7 @@ class CEXEBuild {
     int pp_tempfile(LineParser&line);
     int pp_delfile(LineParser&line);
     int pp_appendfile(LineParser&line);
+    int pp_appendmemfile(LineParser&line);
     int pp_getversionhelper(const TCHAR *cmdname, const TCHAR *path, const TCHAR *basesymname, DWORD high, DWORD low, DWORD flags);
     int pp_getversion(int which_token, LineParser&line);
     int pp_searchreplacestring(LineParser&line);
