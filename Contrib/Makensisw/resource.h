@@ -135,6 +135,7 @@
 #define IDM_ZOOM_INC                    542
 #define IDM_ZOOM_DEC                    543
 #define IDM_ZOOM_RST                    544
+#define IDM_ARP                         545
 
 #define IDM_ZSTD                        545
 #define IDM_ZSTD_SOLID                  546

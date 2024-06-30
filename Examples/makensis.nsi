@@ -232,11 +232,11 @@ ${MementoSection} "NSIS Core Files (required)" SecCore
 
   !ifndef NO_NSISMENU_HTML
     SetOutPath $INSTDIR\Menu
-    File ..\Menu\*.html
+    File ..\..\Menu\*.html
     SetOutPath $INSTDIR\Menu\images
-    File ..\Menu\images\header.gif
-    File ..\Menu\images\line.gif
-    File ..\Menu\images\site.gif
+    File ..\..\Menu\images\header.gif
+    File ..\..\Menu\images\line.gif
+    File ..\..\Menu\images\site.gif
   !endif
 
   Delete $INSTDIR\makensis.htm
@@ -830,7 +830,7 @@ Section -post
   WriteRegStr HKLM "${REG_UNINST_KEY}" "QuietUninstallString" '"$INSTDIR\uninst-nsis.exe" /S'
   WriteRegStr HKLM "${REG_UNINST_KEY}" "InstallLocation" "$INSTDIR"
   WriteRegStr HKLM "${REG_UNINST_KEY}" "DisplayName" "Nullsoft Install System${NAMESUFFIX}"
-  WriteRegStr HKLM "${REG_UNINST_KEY}" "DisplayIcon" "$INSTDIR\uninst-nsis.exe,0"
+  WriteRegStr HKLM "${REG_UNINST_KEY}" "DisplayIcon" "$INSTDIR\NSIS.exe"
   WriteRegStr HKLM "${REG_UNINST_KEY}" "DisplayVersion" "${VERSION}"
 !ifdef VER_MAJOR & VER_MINOR & VER_REVISION & VER_BUILD
   WriteRegDWORD HKLM "${REG_UNINST_KEY}" "VersionMajor" "${VER_MAJOR}" ; Required by WACK

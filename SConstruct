@@ -157,7 +157,8 @@ if defenv['PLATFORM'] == 'win32':
 	ignore_tests = 'none'
 else:
 	ignore_tests = ','.join(Split("""
-Examples/makensis.nsi"""))
+Examples/makensis.nsi
+Examples/makensis-fork.nsi"""))
 
 # version
 opts.Add(('VERSION', 'Version of NSIS', cvs_version))
@@ -244,6 +245,22 @@ defenv.Replace(BUILD_CONFIG = defenv.subst('$BUILD_PREFIX/config'))
 # ensure the config directory exists
 if not Dir(defenv.Dir('#$BUILD_CONFIG')).exists():
 	defenv.Execute(Mkdir(defenv.Dir('#$BUILD_CONFIG')))
+
+# marius: broadcast TARGET_ARCH
+if defenv['TARGET_ARCH'] != None:
+    if defenv['TARGET_ARCH'] == 'x86':
+        defenv.Append(APPEND_CCFLAGS = ['-DTARGET_ARCH=1'])         # TARGET_X86UNICODE=1 (build.h)
+    if defenv['TARGET_ARCH'] == 'amd64':
+        defenv.Append(APPEND_CCFLAGS = ['-DTARGET_ARCH=2'])         # TARGET_AMD64=2 (build.h)
+    if defenv['TARGET_ARCH'] == 'arm64':
+        defenv.Append(APPEND_CCFLAGS = ['-DTARGET_ARCH=3'])         # TARGET_ARM64=3 (build.h)
+
+# marius: fix scons failing to find 'ml.exe' instead of 'ml64.exe' (microsoft assembler) in msvc/amd64 builds
+# https://scons-users.scons.narkive.com/g4FXoAEP/scons-uses-wrong-visual-studio-assembler-for-64-bit
+if 'msvc' in defenv['TOOLS'] or 'mstoolkit' in defenv['TOOLS']:
+	if defenv['TARGET_ARCH'] == 'amd64':
+		if defenv['AS'] == 'ml':
+			defenv['AS'] = 'ml64'
 
 # write configuration into sconf.h and defines.h
 sconf_h = open(defenv.File('#$BUILD_CONFIG/nsis-sconf.h').abspath, 'w')

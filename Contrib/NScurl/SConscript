@@ -1,0 +1,79 @@
+from pathlib import Path
+import shutil
+from zipfile import ZipFile
+from urllib import request
+
+target = 'NScurl'
+
+Import('env')
+
+scriptpath = Path((lambda x:x).__code__.co_filename)
+scriptdir = scriptpath.parent
+
+# print('----------------------------------------------------------------------')
+# print(env.Dump())
+# print('----------------------------------------------------------------------')
+# print(f"scriptdir: {scriptdir}")
+# print('----------------------------------------------------------------------')
+
+unicode = 'UNICODE' in env['CPPDEFINES']
+archdir = env['TARGET_ARCH'] + ('-unicode' if unicode else '-ansi')    # x86-unicode|x86-amsi|amd64-unicode
+
+# Download
+pluginUrl = 'https://github.com/negrutiu/nsis-nscurl/releases/latest/download/NScurl.zip'
+pluginZip = scriptdir.joinpath('github', 'NScurl.zip')
+pluginEtag = scriptdir.joinpath('github', 'NScurl.etag')
+pluginDir = scriptdir.joinpath('github', 'package')
+
+print(f"Download {pluginUrl} to {pluginZip} ({archdir}) ...")
+headers = {}
+
+if pluginEtag.exists() and pluginZip.exists():
+    with open(pluginEtag) as etagfile:
+        etag = etagfile.read()
+        headers['If-None-Match'] = etag.encode()
+
+try:
+    with request.urlopen(request.Request(pluginUrl, headers=headers)) as http:
+        pluginZip.parent.mkdir(parents=True, exist_ok=True)
+        with open(pluginZip, 'wb') as outfile:
+            outfile.write(http.read())
+        print(f"  {http.status} {http.reason}, {http.getheader('Content-Length')} bytes, ETag:{http.getheader('ETag')}")
+        if http.getheader('ETag') != None:
+            with open(pluginEtag, 'w') as etagfile:
+                etagfile.write(http.getheader('ETag'))
+except request.HTTPError as ex:
+    if ex.code == 304:
+        print("  file already up-to-date")
+    else:
+        raise
+
+# Extract
+print (f"{pluginZip.name} contents:")
+with ZipFile(pluginZip) as myzip:
+    for zfile in myzip.filelist:
+        if not zfile.is_dir():
+            date = "%d-%02d-%02d %02d:%02d:%02d" % zfile.date_time[:6]
+            print("  %-46s %s %12d" % (zfile.filename, date, zfile.file_size))
+    shutil.rmtree(pluginDir, ignore_errors=True)
+    myzip.extractall(pluginDir)
+
+# Distribute
+Import('defenv')
+
+examples = [
+    pluginDir.joinpath('Examples', 'NScurl', 'NScurl-Test.nsi'),
+    pluginDir.joinpath('Examples', 'NScurl', 'NScurl-Test-build.bat')
+]
+
+docs = [
+    pluginDir.joinpath('Docs', 'NScurl', 'NScurl.readme.md')
+]
+
+plugins = [
+    pluginDir.joinpath('Plugins', archdir, 'NScurl.dll')
+]
+
+defenv.DistributeExamples(examples, path=target)
+defenv.DistributeDocs(docs, path=target)
+defenv.DistributePlugin(plugins, arcsubpath=archdir)
