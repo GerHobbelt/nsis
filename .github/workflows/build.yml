@@ -11,7 +11,7 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.x']  # 2.x is supported but EOL on GitHub Actions
-        os: [ubuntu-20.04, ubuntu-22.04, macos-11, macos-12, windows-2019]  # TODO fails to find VC windows-2022
+        os: [ubuntu-20.04, ubuntu-22.04, ubuntu-24.04, macos-13, windows-2019, windows-2022]  # TODO fails to find cppunit on macos-14/15
         log: [yes, no]
         include:
           - nightly: nightly
@@ -22,7 +22,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Brew Dependencies
         run: |
           brew install scons mingw-w64 zlib
@@ -73,7 +73,7 @@ jobs:
           zip $zip build.log
         if: matrix.nightly == 'nightly' && github.ref == 'refs/heads/master'
       - name: Upload Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: build.zip
           path: nsis-*.zip
@@ -85,7 +85,7 @@ jobs:
     needs: [build]
     steps:
       - name: Download a single artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: build.zip
       - name: Upload to SourceForge

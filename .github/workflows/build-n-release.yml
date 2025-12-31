@@ -23,9 +23,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ['3.x']  # 2.x is supported but EOL on GitHub Actions
-        os: [ubuntu-latest, macos-13, windows-latest] # [ubuntu-20.04, ubuntu-22.04, macos-11, macos-12, macos-13, windows-latest]  # TODO fails to find cppunit macos-14
-
+        os: [ubuntu-22.04, windows-latest]   # nothing works on macos-latest (`cppunit` fails to build. `zlib` not found)
         arch: [x86, amd64]
         compiler: [gcc]
         include:
@@ -42,8 +40,7 @@ jobs:
       - name: Brew Dependencies
         if: startsWith(matrix.os, 'macos')
         run: |
-          brew install gcc scons mingw-w64 automake autoconf libtool
-          brew update && brew outdated && brew upgrade && brew cleanup
+          brew install scons mingw-w64 libtool autoconf automake
 
       - name: Apt Dependencies
         if: startsWith(matrix.os, 'ubuntu')
@@ -58,10 +55,17 @@ jobs:
       - name: Windows Dependencies
         if: startsWith(matrix.os, 'windows')
         run: |
-          pip install -U scons
+          # install scons excluding build 4.8.0 (https://github.com/SCons/scons/issues/4585)
+          pip install -U scons!=4.8.0
+          #pip install -U scons
+
           # microsoft removed the download of htmlhelp.exe -- https://chocolatey.org/packages/html-help-workshop#comment-5245282888
           #choco install html-help-workshop 
           echo "${Env:ProgramFiles(x86)}\HTML Help Workshop" >> $Env:GITHUB_PATH
+
+          echo -------------------------------------------------------------
+          py -0p
+          pip list
 
       - name: Upgrade msys2/mingw64
         if: startsWith(matrix.os, 'windows') && matrix.compiler == 'gcc'
@@ -123,12 +127,28 @@ jobs:
           git_checkout('https://github.com/madler/zlib.git', zlibdir)
           build_zlib(r'${{matrix.compiler}}', r'${{matrix.arch}}', zlibdir)
 
-      - name: CppUnit Debug
+      - name: Debug MacOS
         if: startsWith(matrix.os, 'macos')
         run: |
-            gcc --version
-            gcc-13 --version
-            g++-13 --version
+            ls -la /usr/bin/i686* || echo "no /usr/bin/i686* files"
+            echo ------------------------------------------------------------
+            ls -la /usr/bin/x86_64* || echo "no /usr/bin/x86_64* files"
+            echo ------------------------------------------------------------
+            ls -la /usr/bin/*-13 || echo "no /usr/bin/*-13 files"
+            ls -la /usr/local/bin/*-13 || echo "no /usr/local/bin/*-13 files"
+            echo ------------------------------------------------------------
+            ls -la /usr/local/Cellar/gcc@13/13.3.0/bin/* || echo "/usr/local/Cellar/gcc@13/13.3.0/bin/* files"
+            echo ------------------------------------------------------------
+            ls -la /opt/homebrew/bin/i686* || echo "no /opt/homebrew/bin/i686* files"
+            echo ------------------------------------------------------------
+            ls -la /opt/homebrew/bin/x86_64* || echo "no /opt/homebrew/bin/x86_64* files"
+            echo ------------------------------------------------------------
+            for compiler in cc c++ gcc g++ gcc-13 g++-13 clang clang++
+            do
+              echo -- $compiler --------------------------------------------------------
+              which $compiler
+              $compiler --version
+            done
 
       - name: CppUnit Checkout & Build
         shell: python
@@ -139,7 +159,8 @@ jobs:
             from nsis_build import *
             # ----- nsis_build.py -----
             cppunitdir = os.path.join(r'${{github.workspace}}', 'cppunit')
-            git_checkout('git://anongit.freedesktop.org/git/libreoffice/cppunit', cppunitdir)
+            #git_checkout('git://anongit.freedesktop.org/git/libreoffice/cppunit', cppunitdir)   # git server is unreliable lately
+            download_cppunit(cppunitdir)
             build_cppunit(r'${{matrix.compiler}}', r'${{matrix.arch}}', cppunitdir)
 
       - name: Build NSIS
@@ -165,7 +186,7 @@ jobs:
   package:
     name: Package
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
 
     # `fetch-depth: 0` pulls full branch history. Needed to extract the SVN revision number from git comments
@@ -211,12 +232,14 @@ jobs:
       with:
         name: nsis-x86-setup
         path: .instdist-ubuntu-x86/nsis*-x86.exe
+        include-hidden-files: true    # https://github.com/actions/upload-artifact/issues/618
 
     - name: Upload NSIS Setup (amd64)
       uses: actions/upload-artifact@v4
       with:
         name: nsis-amd64-setup
         path: .instdist-ubuntu-amd64/nsis*-amd64.exe
+        include-hidden-files: true    # https://github.com/actions/upload-artifact/issues/618
   
   # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 

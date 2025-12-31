@@ -41,7 +41,7 @@ def nsis_version(
         major_version=nsis_major_version(),
         minor_version=nsis_minor_version(),
         revision_number=nsis_revision_number(),
-        build_number = 0):
+        build_number=0):
     return f"{major_version}.{minor_version}.{revision_number}.{nsis_build_number(build_number)}"
 
 
@@ -49,13 +49,25 @@ def nsis_packed_version(
         major_version=nsis_major_version(),
         minor_version=nsis_minor_version(),
         revision_number=nsis_revision_number(),
-        build_number = 0):
+        build_number=0):
     # instead of '0xMMmmmrrb' we'll use '0xMMmmmbbb'. 'bbb' range is [0, 4095]
     majver = min(major_version, 0xff)
     minver = min(minor_version, 0xfff) 
     buildno = min(nsis_build_number(build_number), 0xfff)
     return '0x%0.2x%0.3x%0.3x' % (majver, minver, buildno)
 
+
+def nsis_distro_name():
+    process = subprocess.Popen(['git', 'rev-parse', '--abbrev-ref', 'HEAD'], stdout=subprocess.PIPE)
+    (cout, cerr) = process.communicate()
+    exitcode = process.wait()
+    if exitcode != 0:
+        raise OSError(exitcode, f"subprocess exit code {exitcode}")
+
+    distro = path.basename(cout.decode('utf-8')).replace('\r', '').replace('\n', '').replace(' ', '_')      # current branch name
+    if distro == 'master':
+        distro = 'negrutiu'
+    return distro
 
 if __name__ == '__main__':
     from argparse import ArgumentParser
@@ -65,3 +77,4 @@ if __name__ == '__main__':
     
     print(f"version={nsis_version(build_number=args.build_number)}")
     print(f"packed_version={nsis_packed_version(build_number=args.build_number)}")
+    print(f"distro_name={nsis_distro_name()}")

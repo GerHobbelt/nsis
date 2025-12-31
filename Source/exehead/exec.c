@@ -3,7 +3,7 @@
  * 
  * This file is a part of NSIS.
  * 
- * Copyright (C) 1999-2023 Nullsoft and Contributors
+ * Copyright (C) 1999-2025 Nullsoft and Contributors
  * 
  * Licensed under the zlib/libpng license (the "License");
  * you may not use this file except in compliance with the License.
@@ -378,7 +378,10 @@ static int NSISCALL ExecuteEntry(entry *entry_)
             p = findchar(p, _T('\\'));
             c = *p, *p = 0;
             if (!c && parm2 && UserIsAdminGrpMember()) // Lock down the final directory?
+            {
               ec = CreateRestrictedDirectory(buf1);
+              if (ec) exec_error++; // Report error to add_plugins_dir_initializer
+            }
             else
               ec = CreateNormalDirectory(buf1);
             if (ec)

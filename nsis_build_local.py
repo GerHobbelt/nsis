@@ -1,6 +1,6 @@
 from glob import glob
 from os import path
-import os, sys, shutil
+import datetime, os, sys, shutil
 from subprocess import Popen
 from threading import Thread
 
@@ -40,8 +40,10 @@ def copy_sources(srcdir, dstdir, verbose=False):
 error_count = 0
 
 def build_thread(nsisdir, distrodir, compiler, arch, build_number=0, nsislog=True, nsismaxstrlen=4096, tests=True, new_console=True):
+    # clone NSIS source code from current directory to {distrodir}
     copy_sources(nsisdir, distrodir)
-    args = [sys.executable, 'nsis_build.py', f'-a={arch}', f'-c={compiler}', f'-b={build_number}', f'-l={nsislog}', f'-s={nsismaxstrlen}', f'-t={tests}']
+    # Run 'nsis_build.py'
+    args = [sys.executable, path.join(nsisdir, distrodir, 'nsis_build.py'), f'-a={arch}', f'-c={compiler}', f'-b={build_number}', f'-l={nsislog}', f'-s={nsismaxstrlen}', f'-t={tests}']
     exitcode = Popen(args, cwd=distrodir, creationflags=(subprocess.CREATE_NEW_CONSOLE if new_console else 0)).wait()
     print(f"-- {args} returned {exitcode}")
     if exitcode != 0:
@@ -49,34 +51,32 @@ def build_thread(nsisdir, distrodir, compiler, arch, build_number=0, nsislog=Tru
         error_count += 1
 
 if __name__ == '__main__':
-    def to_bool(str):
-        if str.lower() in ['true', 'yes', 'on', '1']: return True
-        elif str.lower() in ['false', 'no', 'off', '0']: return False
-        return None
 
     from argparse import ArgumentParser
     parser = ArgumentParser()
     parser.add_argument("-b", "--build-number", type=int, default=0, help='NSIS build number')
     parser.add_argument("-c", "--compiler", type=str, default='gcc', choices=['gcc', 'msvc'], help="Compiler (gcc|msvc)")
-    parser.add_argument("-l", "--nsis-log", type=to_bool, default=True, help='Enable NSIS logging. See LogSet and LogText')
+    parser.add_argument("-l", "--nsis-log", type=lambda x: (str(x).lower() in ['true','1', 'yes']), default=True, help='Enable NSIS logging. See LogSet and LogText')
     parser.add_argument("-s", "--nsis-max-strlen", type=int, default=4096, help='Sets NSIS maximum string length. See NSIS_MAX_STRLEN')
-    parser.add_argument("-p", "--parallel", type=to_bool, default=True, help='Build x86 and amd64 in parallel. Disable to investigate build errors')
-    parser.add_argument("-t", "--tests", type=to_bool, default=True, help='Build and run NSIS unit tests')
+    parser.add_argument("-p", "--parallel", type=lambda x: (str(x).lower() in ['true','1', 'yes']), default=True, help='Build x86 and amd64 in parallel. Disable to investigate build errors')
+    parser.add_argument("-t", "--tests", type=lambda x: (str(x).lower() in ['true','1', 'yes']), default=True, help='Build and run NSIS unit tests')
     parser.add_argument("-v", "--verbose-level", type=int, default=3, help='makensis.exe verbosity level')
     args = parser.parse_args()
 
     separator = '\n--------------------------------------------------------------------------------\n'
 
     nsisdir = path.dirname(__file__)
-    distro_x86_dir = path.join(nsisdir, f'build-local-{args.compiler}-x86')
+    distro_x86_dir   = path.join(nsisdir, f'build-local-{args.compiler}-x86')
     distro_amd64_dir = path.join(nsisdir, f'build-local-{args.compiler}-amd64')
 
     threads = [
-        Thread(target=build_thread, args=[nsisdir, distro_x86_dir, args.compiler, 'x86', args.build_number, args.nsis_log, args.nsis_max_strlen, args.tests, args.parallel]),
+        Thread(target=build_thread, args=[nsisdir, distro_x86_dir,   args.compiler, 'x86',   args.build_number, args.nsis_log, args.nsis_max_strlen, args.tests, args.parallel]),
         Thread(target=build_thread, args=[nsisdir, distro_amd64_dir, args.compiler, 'amd64', args.build_number, args.nsis_log, args.nsis_max_strlen, args.tests, args.parallel]),
     ]
 
-    print('building...')
+    buildStart = datetime.datetime.now()
+    print(f'\n-- build started at {buildStart}\n')
+
     if args.parallel:
         for th in threads:
             th.start()
@@ -89,22 +89,26 @@ if __name__ == '__main__':
             if error_count > 0:
                 break
 
+    buildEnd = datetime.datetime.now()
+    print(f'\n-- build ended at {buildEnd} (+{buildEnd - buildStart})\n')
+
     if error_count > 0:
         print(f"{error_count}/{len(threads)} architectures failed to build")
         print("Tip: use --parallel=false argument to build sequentially and print the output to the main console")
         exit(error_count)
 
-    instdist_x86_dir = path.join(distro_x86_dir, '.instdist')
+    instdist_x86_dir   = path.join(distro_x86_dir,   '.instdist')
     instdist_amd64_dir = path.join(distro_amd64_dir, '.instdist')
 
     print(separator)
     merge_nsis_distros(instdist_x86_dir, instdist_amd64_dir)
 
     print(separator)
-    build_nsis_installer(instdist_x86_dir, 'x86', build_number=args.build_number, verbose_level=args.verbose_level)
+    build_nsis_installer(instdist_x86_dir,   'x86',   build_number=args.build_number, verbose_level=args.verbose_level)
     print(separator)
     build_nsis_installer(instdist_amd64_dir, 'amd64', build_number=args.build_number, verbose_level=args.verbose_level)
 
     print(separator)
-    print('all done.')
+    allEnd = datetime.datetime.now()
+    print(f'\n-- all done at {allEnd} (+{allEnd - buildStart})\n')
     print(separator)
