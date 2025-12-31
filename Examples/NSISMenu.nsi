@@ -14,18 +14,12 @@ CompletedText " "
 LangString ^ClickInstall 0 " "
 Caption "$(^Name)"
 
-!macro UNPACKVERFIELD out in shr mask fmt
-!define /redef /math ${out} ${in} >>> ${shr}
-!define /redef /math ${out} ${${out}} & ${mask}
-!define /redef /intfmt ${out} "${fmt}" ${${out}}
-!macroend
+!define WEB_URL "https://github.com/negrutiu/nsis"
+!define WEB_CAPTION "github.com/negrutiu/nsis"
 
 !ifndef VER_MAJOR & VER_MINOR
-!ifdef NSIS_PACKEDVERSION
-!insertmacro UNPACKVERFIELD VER_MAJOR ${NSIS_PACKEDVERSION} 24 0x0ff "%X"
-!insertmacro UNPACKVERFIELD VER_MINOR ${NSIS_PACKEDVERSION} 12 0xfff "%X"
-!insertmacro UNPACKVERFIELD VER_REVISION ${NSIS_PACKEDVERSION} 4 255 "%X"
-!insertmacro UNPACKVERFIELD VER_BUILD ${NSIS_PACKEDVERSION} 00 0x00f "%X"
+!ifdef NSIS_VERSION
+!searchparse "${NSIS_VERSION}" 'v' VER_MAJOR '.' VER_MINOR '.' VER_REVISION '.' VER_BUILD	; "v1.2.3.4" -> [1, 2, 3, 4]
 !endif
 !endif
 !ifdef VER_MAJOR & VER_MINOR
@@ -37,7 +31,8 @@ VIAddVersionKey "ProductName" "NSIS"
 VIAddVersionKey "ProductVersion" "${VERSTR}"
 VIAddVersionKey "FileVersion" "${VERSTR}"
 VIAddVersionKey "FileDescription" "NSIS Menu"
-VIAddVersionKey "LegalCopyright" "http://nsis.sf.net/License"
+VIAddVersionKey "CompanyName" "NSIS Project"
+VIAddVersionKey "LegalCopyright" "${WEB_URL}"
 !endif
 
 !include nsDialogs.nsh
@@ -167,7 +162,7 @@ nsDialogs::CreateControl ${__NSD_Icon_CLASS} ${__NSD_Icon_STYLE}|${SS_CENTERIMAG
 Pop $0
 ${SetCtlColors} $0 "" "" ${CB_HEADER}
 
-CreateFont $1 "Trebuchet MS" 17
+CreateFont $1 "Trebuchet MS" 15
 !searchreplace VERSTR "${NSIS_VERSION}" "v" ""
 nsDialogs::CreateControl ${__NSD_Label_CLASS} ${__NSD_Label_STYLE}|${SS_CENTERIMAGE}|${SS_ENDELLIPSIS} ${__NSD_Label_EXSTYLE} 34u 1u -34u ${UY_HEADER}u "nullsoft scriptable install system ${VERSTR}"
 Pop $0
@@ -243,11 +238,11 @@ ${NSD_CreateLabel} 0 -22u 100% 1 ""
 Pop $0
 ${SetCtlColors} $0 000000 000000 ${CB_FOOTERLINE}
 
-nsDialogs::CreateControl ${__NSD_Label_CLASS} ${__NSD_Label_STYLE}|${SS_CENTERIMAGE}|${SS_NOTIFY} ${__NSD_Label_EXSTYLE} -110u -20u 100% 20u "nsis.sourceforge.net"
+nsDialogs::CreateControl ${__NSD_Label_CLASS} ${__NSD_Label_STYLE}|${SS_CENTERIMAGE}|${SS_NOTIFY} ${__NSD_Label_EXSTYLE} -124u -21u 100% 20u "${WEB_CAPTION}"
 Pop $0
 ${SetCtlColors} $0 ${CT_FOOTER} transparent transparent
 SendMessage $0 ${WM_SETFONT} ${HF_HEADER} 1
-nsDialogs::SetUserData $0 "https://nsis.sourceforge.io"
+nsDialogs::SetUserData $0 "${WEB_URL}"
 ${NSD_OnClick} $0 OnLinkClick
 
 nsDialogs::Show

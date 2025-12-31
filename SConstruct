@@ -18,18 +18,24 @@ plugins = [
 	'Banner',
 	'BgImage',
 	'Dialer',
+	'ExecDos',
 	'InstallOptions',
 	'LangDLL',
 	'Library/TypeLib',
 	'Math',
+	'NScurl',
 	'nsDialogs',
 	'nsExec',
 	'NSISdl',
+	'NSutils',
+	'NSxfer',
+	'ShellLink',
 	'Splash',
 	'StartMenu',
 	'System',
 	'UserInfo',
 	'VPatch/Source/Plugin',
+	'w7tbp',
 ]
 
 utils = [
@@ -150,7 +156,8 @@ if defenv['PLATFORM'] == 'win32':
 	ignore_tests = 'none'
 else:
 	ignore_tests = ','.join(Split("""
-Examples/makensis.nsi"""))
+Examples/makensis.nsi
+Examples/makensis-fork.nsi"""))
 
 # version
 opts.Add(('VERSION', 'Version of NSIS', cvs_version))
@@ -217,6 +224,9 @@ if 'NSIS_CONFIG_CONST_DATA_PATH' in defenv['NSIS_CPPDEFINES']:
 	defenv.Append(NSIS_CPPDEFINES = [('PREFIX_DOC', '"%s"' % defenv.subst('$PREFIX_DOC'))])
 
 if defenv.get('SOURCE_DATE_EPOCH','') != '':
+	if defenv.get('SOURCE_DATE_EPOCH','').lower() == 'now':
+		import time
+		defenv['SOURCE_DATE_EPOCH'] = str(int(time.time()))
 	defenv['ENV']['SOURCE_DATE_EPOCH'] = defenv['SOURCE_DATE_EPOCH'] = int(defenv['SOURCE_DATE_EPOCH'], 0) # Normalize and apply to ENV for child processes
 	defenv.Append(NSIS_CPPDEFINES = [('NSIS_SOURCE_DATE_EPOCH', '%s' % defenv['SOURCE_DATE_EPOCH'])]) # Display in /HDRINFO
 
@@ -237,6 +247,22 @@ defenv.Replace(BUILD_CONFIG = defenv.subst('$BUILD_PREFIX/config'))
 # ensure the config directory exists
 if not Dir(defenv.Dir('#$BUILD_CONFIG')).exists():
 	defenv.Execute(Mkdir(defenv.Dir('#$BUILD_CONFIG')))
+
+# marius: broadcast TARGET_ARCH
+if defenv['TARGET_ARCH'] != None:
+    if defenv['TARGET_ARCH'] == 'x86':
+        defenv.Append(APPEND_CCFLAGS = ['-DTARGET_ARCH=1'])         # TARGET_X86UNICODE=1 (build.h)
+    if defenv['TARGET_ARCH'] == 'amd64':
+        defenv.Append(APPEND_CCFLAGS = ['-DTARGET_ARCH=2'])         # TARGET_AMD64=2 (build.h)
+    if defenv['TARGET_ARCH'] == 'arm64':
+        defenv.Append(APPEND_CCFLAGS = ['-DTARGET_ARCH=3'])         # TARGET_ARM64=3 (build.h)
+
+# marius: fix scons failing to find 'ml.exe' instead of 'ml64.exe' (microsoft assembler) in msvc/amd64 builds
+# https://scons-users.scons.narkive.com/g4FXoAEP/scons-uses-wrong-visual-studio-assembler-for-64-bit
+if 'msvc' in defenv['TOOLS'] or 'mstoolkit' in defenv['TOOLS']:
+	if defenv['TARGET_ARCH'] == 'amd64':
+		if defenv['AS'] == 'ml':
+			defenv['AS'] = 'ml64'
 
 # write configuration into sconf.h and defines.h
 sconf_h = open(defenv.File('#$BUILD_CONFIG/nsis-sconf.h').abspath, 'w')
@@ -317,6 +343,14 @@ def GetArcSuffix(env, unicode = None):
 		suff = '-ansi'
 	return GetArcCPU(env) + suff
 
+def GetTargetMinOSVersion(env):
+	if GetArcCPU(defenv) == 'arm64':
+		return (6, 4)
+	if not GetArcCPU(defenv) == 'x86':
+		return (5, 1)
+	return (4, 0)
+
+
 def SafeFile(f):
 	from types import StringType
 
@@ -366,8 +400,10 @@ defenv['INSTDISTDIR'] = defenv.Dir('#.instdist')
 defenv['TESTDISTDIR'] = defenv.Dir('#.test')
 defenv['DISTSUFFIX'] = ''
 
-if GetArcCPU(defenv) != 'x86':
-	defenv['DISTSUFFIX'] += GetArcCPU(defenv)
+if ARGUMENTS.get('DISTNAME') != None:
+	defenv['DISTSUFFIX'] = '-' + ARGUMENTS.get('DISTNAME')
+defenv['DISTSUFFIX'] += '-' + GetArcCPU(defenv)
+
 if 'CODESIGNER' in defenv:
 	defenv['DISTSUFFIX'] += '-signed'
 
@@ -450,7 +486,7 @@ def Sign(targets):
 			a = defenv.Action('$CODESIGNER "%s"' % t.path)
 			defenv.AddPostAction(t, a)
 
-Import('SilentActionEcho IsPEExecutable SetPESecurityFlagsWorker MakeReproducibleAction SetPEWin95Supported')
+Import('SilentActionEcho IsPEExecutable SetPESecurityFlagsWorker SetPEMinOS MakeReproducibleAction SetPEWin95Supported')
 def SetPESecurityFlagsAction(target, source, env):
 	for t in target:
 		SetPESecurityFlagsWorker(t.path)
@@ -464,6 +500,14 @@ def SetPESecurityFlags(targets):
 	for t in targets:
 		a = defenv.Action(SetPESecurityFlagsAction, strfunction=SetPESecurityFlagsActionEcho)
 		defenv.AddPostAction(t, a)
+
+def SetTargetPEMinOS(target, source=None, env=None):
+	for t in target:
+		if source is None:
+			defenv.AddPostAction(t, defenv.Action(SetTargetPEMinOS, strfunction=SilentActionEcho))
+		else:
+			ver = GetTargetMinOSVersion(env)
+			SetPEMinOS(t.path, ver[0], ver[1], ver[0], ver[1])
 
 def MakeReproducible(targets):
 	for t in targets:
@@ -489,6 +533,7 @@ defenv.DistributeDocs = DistributeDocs
 defenv.DistributeExamples = DistributeExamples
 defenv.Sign = Sign
 defenv.SetPESecurityFlags = SetPESecurityFlags
+defenv.SetTargetPEMinOS = SetTargetPEMinOS
 defenv.MakeReproducible = MakeReproducible
 defenv.MakeWin95Compatible = MakeWin95Compatible
 defenv.TestScript = TestScript
@@ -541,6 +586,17 @@ if 'ZLIB_W32' in defenv:
 	defenv['ZLIB_W32_NEW_DLL'] = defenv.FindFile('zlib.dll',
 		[defenv['ZLIB_W32'], defenv['ZLIB_W32_LIB']])
 
+	# marius: better chances to find zlib using absolute paths
+	for key in ['ZLIB_W32_INC', 'ZLIB_W32_LIB']:
+		if not os.path.isabs(defenv[key]):
+			defenv[key] = os.path.join(os.path.abspath(os.curdir), defenv[key])
+
+	for name, value in defenv._dict.items():
+		if name.find('ZLIB') != -1 or name.find('APPEND') != -1:
+			print(f"-- {name} = ({type(value)}){value}")
+	for p in os.environ['PATH'].split(os.pathsep):
+		print(f"-- PATH = {p}")
+
 tools = defenv['TOOLS']
 
 envs = []
@@ -572,12 +628,17 @@ Export('plugin_env plugin_uenv')
 if defenv['PLATFORM'] == 'win32':
 	def build_nsis_menu_for_zip(target, source, env):
 		cmdline = FindMakeNSIS(env, str(env['ZIPDISTDIR']))
-		cmd = env.Command(None, source, cmdline + ' $SOURCE /X"OutFile %s"' % (target[0].abspath, ))
-		AlwaysBuild(cmd)
+		if Execute(f'"{cmdline}" "{source[0].abspath}" /X"OutFile {target[0].abspath}"'):
+			Exit(1)
 
-	nsis_menu_target = defenv.Command(os.path.join('$ZIPDISTDIR', 'NSIS.exe'),
-																		os.path.join('$ZIPDISTDIR', 'Examples', 'NSISMenu.nsi'),
-																		build_nsis_menu_for_zip)
+	nsis_menu_target = defenv.Command(
+		os.path.join('$ZIPDISTDIR', 'NSIS.exe'),
+		os.path.join('$ZIPDISTDIR', 'Examples', 'NSISMenu.nsi'),
+		build_nsis_menu_for_zip
+	)
+	defenv.Depends(nsis_menu_target, r'$ZIPDISTDIR\makensis.exe')
+	defenv.Depends(nsis_menu_target, r'$ZIPDISTDIR\Stubs')
+	defenv.Depends(nsis_menu_target, r'$ZIPDISTDIR\Plugins')
 	defenv.MakeReproducible(nsis_menu_target)
 	defenv.Sign(nsis_menu_target)
 
@@ -608,6 +669,7 @@ def build_installer(target, source, env):
 	cmdline = FindMakeNSIS(env, str(env['INSTDISTDIR'])) + ' %sDOUTFILE=%s %s' % (optchar, target[0].abspath, env['INSTVER'])
 	if 'ZLIB_W32_NEW_DLL' in env and env['ZLIB_W32_NEW_DLL']:
 		cmdline += ' %sDUSE_NEW_ZLIB' % optchar
+	cmdline += ' ' + ARGUMENTS.get('NSIS_EXTRA_PARAM', '')
 	cmd = env.Command(None, source, cmdline + ' $SOURCE')
 	AlwaysBuild(cmd)
 	# Comment out the following if you want to see the installation directory
@@ -615,8 +677,8 @@ def build_installer(target, source, env):
 	#AlwaysBuild(env.AddPostAction(cmd, Delete('$INSTDISTDIR')))
 	env.Alias('dist-installer', cmd)
 
-installer_target = defenv.Command('nsis-${VERSION}-setup${DISTSUFFIX}.exe',
-                                  os.path.join('$INSTDISTDIR', 'Examples', 'makensis.nsi'),
+installer_target = defenv.Command('nsis-${VERSION}${DISTSUFFIX}.exe',
+                                  os.path.join('$INSTDISTDIR', 'Examples', 'makensis-fork.nsi'),
                                   build_installer,
                                   ENV = inst_env)
 defenv.Depends(installer_target, '$INSTDISTDIR')
@@ -661,6 +723,7 @@ def BuildStub(compression, solid, unicode):
 	target = defenv.SConscript(dirs = 'Source/exehead', variant_dir = build_dir, duplicate = False, exports = exports)
 	env.SideEffect('%s/stub_%s.map' % (build_dir, stub), target)
 
+	env.SetTargetPEMinOS(target)
 	env.MakeReproducible(target)
 	env.MakeWin95Compatible(target)
 	env.DistributeStubs(target, names=compression+suffix)
@@ -731,6 +794,7 @@ def BuildPluginWorker(target, source, libs, examples = None, docs = None,
 	defenv.Alias(target, plugin)
 	defenv.Alias('plugins', plugin)
 
+	defenv.SetTargetPEMinOS(plugin)
 	defenv.SetPESecurityFlags(plugin)
 	defenv.MakeReproducible(plugin)
 	defenv.MakeWin95Compatible(plugin)
@@ -828,6 +892,8 @@ def BuildUtil(target, source, libs, entry = None, res = None,
 	defenv.Alias(target, util)
 	defenv.Alias('utils', util)
 
+	if (str(target)[:7]).lower() == 'RegTool'.lower():
+		defenv.SetTargetPEMinOS(util)
 	defenv.MakeReproducible(util)
 	defenv.Sign(util)
 

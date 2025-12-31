@@ -129,12 +129,10 @@ CEXEBuild::CEXEBuild(signed char pponly, bool warnaserror) :
   definedlist.add(_T("NSIS_VERSION"), NSIS_VERSION);
   definedlist.add(_T("NSIS_PACKEDVERSION"), NSIS_PACKEDVERSION);
 
+#ifdef TARGET_ARCH
+  m_target_type=(TARGETTYPE)TARGET_ARCH;
+#else
   m_target_type=TARGET_X86UNICODE;
-#ifdef _WIN32
-  if (sizeof(void*) > 4) m_target_type = TARGET_AMD64; // BUGBUG: scons 'TARGET_ARCH' should specify the default
-#endif
-#ifdef _M_ARM64
-  m_target_type = TARGET_ARM64; // BUGBUG: scons 'TARGET_ARCH' should specify the default
 #endif
   build_unicode=TARGET_X86ANSI != m_target_type;
   build_lockedunicodetarget=false;
@@ -3743,7 +3741,7 @@ bool CEXEBuild::prompt_for_output_path(TCHAR*path, UINT pathcap) const
     }
   };
   size_t io[] = { false, (size_t) path, pathcap }, cb;
-  TinyGrowBuf inputbuf((IGrowBuf::size_type) (cb = FIELD_OFFSET(PROMPT_FILEPATH_DATA, Path[pathcap])));
+  TinyGrowBuf inputbuf((IGrowBuf::size_type) (cb = FIELD_OFFSET(PROMPT_FILEPATH_DATA, Path) + pathcap));
   PROMPT_FILEPATH_DATA *p = (PROMPT_FILEPATH_DATA*) inputbuf.get();
   p->Platform = (sizeof(void*) * 8) | sizeof(TCHAR), p->Reserved = 0;
   _tcscpy(p->Path, path);
@@ -4188,7 +4186,7 @@ void CEXEBuild::postbuild_cmd::delete_all()
 
 CEXEBuild::postbuild_cmd* CEXEBuild::postbuild_cmd::make(const TCHAR *cmdstr, int cmpop, int cmpval)
 {
-  postbuild_cmd *p = (postbuild_cmd*) (new BYTE[FIELD_OFFSET(postbuild_cmd, cmd[_tcsclen(cmdstr)+!0])]);
+  postbuild_cmd *p = (postbuild_cmd*) (new BYTE[FIELD_OFFSET(postbuild_cmd, cmd) + (_tcsclen(cmdstr)+1)*sizeof(TCHAR)]);
   p->next = NULL, _tcscpy(p->cmd, cmdstr);
   p->cmpop = cmpop, p->cmpval = cmpval;
   return p;
