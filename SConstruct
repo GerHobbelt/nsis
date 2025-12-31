@@ -565,6 +565,8 @@ if 'ZLIB_W32' in defenv:
 
 	# marius: VisualC needs absolute paths
 	# if 'msvc' in defenv['TOOLS'] or 'mstoolkit' in defenv['TOOLS']:
+	#
+	# marius: better chances to find zlib using absolute paths
 	for key in ['ZLIB_W32_INC', 'ZLIB_W32_LIB']:
 		if not os.path.isabs(defenv[key]):
 			defenv[key] = os.path.join(os.path.abspath(os.curdir), defenv[key])

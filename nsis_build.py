@@ -8,10 +8,24 @@ from nsis_version import *
 # pacman -S mingw-w64-x86_64-toolchain
 # pacman -S libtool autoconf-wrapper automake-wrapper     (cppunit)
 
-def posix_path(path):
+def run(args):
+    """ Execute subprocess and raise exit code exceptions. """
+    print(f">> {args}")
+    exitcode = Popen(args).wait()
+    if exitcode != 0:
+        raise OSError(exitcode, f"subprocess exit code {exitcode}")
+
+
+def win_to_posix(path):
+    """ Convert `C:\\path\\file.ext` -> `/C/path/file.ext` """
     if path[1] == ':':
         return '/' + path.replace(':', '').replace('\\', '/')
     return path
+
+def validate_compatibility_with_htmlhelp(filepath):
+    for item in path.normpath(filepath).split(os.sep):
+        if item.startswith('.'):
+            raise Exception(f'directory "{filepath}" is incompatible with "HTML Help Workshop" because "{item}" starts with a dot. "NSIS.chm" will fail to build')
 
 def setup_mingw_environ(arch):
     """
@@ -33,7 +47,7 @@ def setup_mingw_environ(arch):
         if path.exists(sh := path.join(os.environ['SystemDrive'] + path.sep, subdir, 'usr', 'bin', 'sh.exe')):
             msysdir = path.join(os.environ['SystemDrive'] + path.sep, subdir)
             break
-    if not msysdir: raise Exception('msys2 not found')
+    if msysdir is None: raise Exception('msys2 not found')
     print(f"-- msysdir = {msysdir}")
     os.environ["PATH"] = path.join(msysdir, 'usr', 'bin') + os.pathsep + os.environ["PATH"]   # i.e r"C:\msys64\usr\bin"
 
@@ -42,11 +56,12 @@ def setup_mingw_environ(arch):
         if path.exists(gcc := path.join(os.environ['SystemDrive'] + path.sep, subdir, 'bin', 'gcc.exe')):
             mingwdir = path.join(os.environ['SystemDrive'] + path.sep, subdir)
             break
-    if not mingwdir: raise Exception(f"mingw{bitness} not found")
+    if mingwdir is None: raise Exception(f"mingw{bitness} not found")
     print(f"-- mingwdir = {mingwdir}")
     os.environ["PATH"] = path.join(mingwdir, 'bin') + os.pathsep + os.environ["PATH"]     # i.e. r"C:\msys64\mingw32\bin", r"C:\mingw32\bin"
 
     return {'msysdir': msysdir, 'mingwdir': mingwdir}
+
 
 def setup_msvc_environ(arch):
     """
@@ -61,12 +76,12 @@ def setup_msvc_environ(arch):
     if os.name != 'nt':
         return None
 
-    if path.exists(vswhere := f"{os.environ.get('PROGRAMFILES(X86)', '*')}\\Microsoft Visual Studio\\Installer\\vswhere.exe"): pass
-    elif path.exists(vswhere := f"{os.environ.get('PROGRAMFILES', '*')}\\Microsoft Visual Studio\\Installer\\vswhere.exe"): pass
+    if path.exists(vswhere := path.join(os.environ.get('PROGRAMFILES(X86)', '*'), 'Microsoft Visual Studio', 'Installer', 'vswhere.exe')): pass
+    elif path.exists(vswhere := path.join(os.environ.get('PROGRAMFILES', '*'), 'Microsoft Visual Studio', 'Installer', 'vswhere.exe')): pass
     else: raise Exception('vswhere.exe not found')
 
     process = Popen([vswhere, '-latest', '-sort', '-format', 'json'], stdout=PIPE, stderr=PIPE)
-    (cout, cerr) = process.communicate()
+    cout, cerr = process.communicate()
     process.wait()
     # print(cout.decode('utf-8'))
     jout = json.loads(cout)
@@ -90,141 +105,136 @@ def setup_msvc_environ(arch):
 
     return {'installationPath': instPath, 'platformToolset': toolset, 'archName': vsarch}
 
+
 def setup_environ(compiler, arch):
     """ Validate `compiler` and `arch` and set up the environment for them. """
     if compiler == 'mingw': compiler = 'gcc'
-    if compiler != 'gcc' and compiler != 'msvc': raise Exception(f"unknown compiler {compiler}")
-    if compiler == 'msvc' and os.name != 'nt': raise Exception(f"{compiler} not available on {os.name}")
+    if compiler not in ['gcc', 'msvc']: raise Exception(f"unknown compiler {compiler}")
+    if compiler == 'msvc' and os.name != 'nt': raise Exception(f"{compiler} not supported on {os.name}")
 
     if arch == "Win32": arch = 'x86'
     if arch == 'x64': arch = 'amd64'
     if arch != 'x86' and arch != 'amd64': raise Exception(f"unknown arch {arch}")
 
-    vars = {}
     if compiler == 'gcc':
-        vars = setup_mingw_environ(arch)
+        return [compiler, arch, setup_mingw_environ(arch)]
     elif compiler == 'msvc':
-        vars = setup_msvc_environ(arch)
+        return [compiler, arch, setup_msvc_environ(arch)]
 
-    return [compiler, arch, vars]
 
 def git_checkout(url, dir, depth = 1):
     """ Clone or Pull a git repository. """
     curdir = path.curdir
     if path.exists(path.join(dir, '.git')):
         os.chdir(dir)
-        args = ['git', 'pull']
-        print(f"-- {args} ({url})")
-        exitcode = Popen(args).wait()
+        run(['git', 'pull'])
     else:
         parentdir = path.dirname(dir)
         os.makedirs(parentdir, exist_ok=True)
         os.chdir(parentdir)
-        args = ['git', 'clone'] + (['--depth', str(depth)] if depth >= 1 else None) + [url, path.basename(dir)]
-        print(f"-- {args}")
-        exitcode = Popen(args).wait()
+        run(['git', 'clone'] + (['--depth', str(depth)] if depth >= 1 else None) + [url, path.basename(dir)])
     os.chdir(curdir)
-    if exitcode != 0:
-        raise OSError(exitcode, f"failed to pull zlib")    
+
 
 def build_zlib(compiler, arch, zlibdir):
     compiler, arch, vars = setup_environ(compiler, arch)
     curdir = path.curdir
     os.chdir(zlibdir)
-    if compiler == 'gcc':
-        if os.name == 'nt':
-            args = [f'mingw32-make.exe', '-fwin32/Makefile.gcc', f'LOC=-D_WIN32_WINNT=0x0400 -static', 'zlib1.dll']
-        else:
-            prefixes = {'x86': 'i686-w64-mingw32-', 'amd64': 'x86_64-w64-mingw32-'}
-            args = ['make', '-fwin32/Makefile.gcc', f'PREFIX={prefixes[arch]}', 'LOC=-D_WIN32_WINNT=0x0400 -static', 'zlib1.dll']
-        print(f"-- {args}")
-        exitcode = Popen(args).wait()
+    if compiler == 'gcc' and os.name == 'nt':
+        args = [f'mingw32-make.exe', '-fwin32/Makefile.gcc', f'LOC=-D_WIN32_WINNT=0x0400 -static', 'zlib1.dll']
+    elif compiler == 'gcc' and os.name != 'nt':
+        prefixes = {'x86': 'i686-w64-mingw32-', 'amd64': 'x86_64-w64-mingw32-'}
+        args = ['make', '-fwin32/Makefile.gcc', f'PREFIX={prefixes[arch]}', 'LOC=-D_WIN32_WINNT=0x0400 -static', 'zlib1.dll']
     elif compiler == 'msvc':
         args = [f'cmd.exe', '/c', 'call', "vcvarsall.bat", arch, '&&', 'nmake.exe', '-f', 'win32/Makefile.msc', f'LOC=/MT', 'zlib1.dll', 'zdll.lib']
-        print(f"-- {args}")
-        exitcode = Popen(args).wait()
+    run(args)
     os.chdir(curdir)
-    if exitcode != 0:
-        raise OSError(exitcode, f"failed to build zlib")    
 
-def build_cppunit(compiler, arch, cppunitdir, CC=None):
-    if path.exists(path.join(cppunitdir, 'output', 'bin', 'DllPlugInTester.exe')):
+
+def build_cppunit(compiler, arch, cppunitdir):
+    if path.exists(path.join(cppunitdir, 'bin', 'DllPlugInTester.exe')) or path.exists(path.join(cppunitdir, 'lib', 'DllPlugInTester_dll.exe')):
         print("cppunit already built.")
         return
     compiler, arch, vars = setup_environ(compiler, arch)
     curdir = path.curdir
     os.chdir(cppunitdir)
     if compiler == 'gcc':
-        prefix = ''
-        if os.name == 'nt':
-            prefix = 'mingw32-'
+        prefix = 'mingw32-' if os.name == 'nt' else ''
+        outargs = [
+            rf"--prefix={win_to_posix(path.join(cppunitdir, 'installed'))}",
+            rf'--libdir={win_to_posix(path.join(cppunitdir, "lib"))}',
+            rf"--bindir={win_to_posix(path.join(cppunitdir, 'bin'))}"
+            ]
         for args in [
             ['sh', './autogen.sh'],
-            ['sh', './configure', 'LDFLAGS=-static', 'MAKE=gmake', rf'--prefix={posix_path(path.join(cppunitdir, "output"))}', rf'CC={CC}' if CC else '', '--disable-silent-rules', '--disable-dependency-tracking', '--disable-doxygen', '--disable-html-docs', '--disable-latex-docs'],
+            ['sh', './configure', f'MAKE={prefix}make'] + outargs + ['LDFLAGS=-static', '--disable-silent-rules', '--disable-dependency-tracking', '--disable-doxygen', '--disable-html-docs', '--disable-latex-docs'],
             [f'{prefix}make'],
-            [f'{prefix}make', 'install'],
-        ]:
-            print(f"--- {args}")
-            exitcode = Popen(args).wait()
-            if exitcode != 0: raise OSError(exitcode, f"failed to build cppunit")
+            [f'{prefix}make', 'install']
+            ]:
+            run(args)
     elif compiler == 'msvc':
         args = ['cmd.exe', '/c', 'call', 'vcvarsall.bat', arch, '&&', 'msbuild', '/m', '/t:build', path.join(cppunitdir, 'src', 'CppUnitLibraries2010.sln'), '/p:Configuration=Release', f'/p:Platform={vars["archName"]}', f'/p:PlatformToolset={vars["platformToolset" ]}']
-        print(f'-- {args}')
-        exitcode = Popen(args).wait()
+        run(args)
     os.chdir(curdir)
-    if exitcode != 0:
-        raise OSError(exitcode, f"failed to build cppunit")
 
-def build_nsis_distro(compiler, arch, buildno, zlibdir, cppunitdir, nsislog=True, nsismaxstrlen=4096, actions = ['test', 'dist']):
+
+def build_nsis_distro(compiler, arch, build_number, zlibdir, cppunitdir=None, nsislog=True, nsismaxstrlen=4096, actions=['test', 'dist']):
     """
-    Build a NSIS distribution package. \n
+    Build a NSIS distribution package. 
     `zlib` and `cppunit` must be built as well.
     """
     compiler, arch, vars = setup_environ(compiler, arch)
+
     if os.name == 'nt':
-        if path.exists(path.join(os.environ['PROGRAMFILES(X86)'], 'HTML Help Workshop')):
-            os.environ['PATH'] += os.pathsep + path.join(os.environ['PROGRAMFILES(X86)'], 'HTML Help Workshop')     # NSIS.chm
+        if path.exists(help_workshop := path.join(os.environ['PROGRAMFILES(X86)'], 'HTML Help Workshop')):
+            os.environ['PATH'] += os.pathsep + help_workshop     # NSIS.chm
+            validate_compatibility_with_htmlhelp(path.dirname(__file__))
+
     args = [f'scons',
             f'TARGET_ARCH={arch}',
             f'ZLIB_W32={zlibdir}',
-            f'VERSION={nsis_version(buildno)}',
+            f'VERSION={nsis_version(build_number=build_number)}',
             f'VER_MAJOR={nsis_major_version()}',
             f'VER_MINOR={nsis_minor_version()}',
             f'VER_REVISION={nsis_revision_number()}',
-            f'VER_BUILD={nsis_build_number(buildno)}',
-            f'VER_PACKED={nsis_packed_version(buildno)}',
+            f'VER_BUILD={nsis_build_number(build_number)}',
+            f'VER_PACKED={nsis_packed_version(build_number=build_number)}',
             f'DISTNAME=negrutiu-{compiler}',
             f'STRIP=1',
             f'SKIP_UTILS="NSIS Menu"',
             f'NSIS_CONFIG_LOG={"Yes" if nsislog else "No"}',
             f'NSIS_CONFIG_LOG_TIMESTAMP={"Yes" if nsislog else "No"}',
             f'NSIS_MAX_STRLEN={nsismaxstrlen}']
-    if compiler == 'gcc':
-        if os.name == 'nt':
-            args += ['TOOLSET=gcc,gnulink,mingw']   # building in Windows using mingw
-        args += ['APPEND_LINKFLAGS=-static']
-    if 'test' in actions:
-        if compiler == 'gcc':
-            args += [f'APPEND_CPPPATH={path.join(cppunitdir, "output", "include")}', f'APPEND_LIBPATH={path.join(cppunitdir, "output", "lib")}']
-        elif compiler == 'msvc':
-            args += [f'APPEND_CPPPATH={path.join(cppunitdir, "include")}', f'APPEND_LIBPATH={path.join(cppunitdir, "lib")}']
-    args += actions
-    print(f"-- {args}")
 
-    exitcode = Popen(args).wait()
-    if exitcode != 0:
-        raise OSError(exitcode, f"failed to build nsis")    
+    if compiler == 'gcc' and os.name == 'nt':
+        args += ['TOOLSET=gcc,gnulink,mingw']   # use mingw toolset in Windows
+
+    if compiler == 'gcc':
+        args += ['APPEND_LINKFLAGS=-static']
+
+    if cppunitdir is not None and 'test' in actions:
+        args += [f'APPEND_CPPPATH={path.join(cppunitdir, "include")}',
+                 f'APPEND_LIBPATH={path.join(cppunitdir, "lib")}']
+
+    args += actions
+
+    run(args)
+
 
 if __name__ == '__main__':
-    import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument_group('build')
-    parser.add_argument("-a", "--arch", type=str, default='x86', help='Output architecture (x86|amd64)')
+    def to_bool(str):
+        if str.lower() in ['true', 'yes', 'on', '1']: return True
+        elif str.lower() in ['false', 'no', 'off', '0']: return False
+        return None
+
+    from argparse import ArgumentParser
+    parser = ArgumentParser()
+    parser.add_argument("-a", "--arch", type=str, default='x86', choices=['x86', 'amd64'], help='Output architecture (x86|amd64)')
     parser.add_argument("-b", "--build-number", type=int, default=0, help='NSIS build number')
-    parser.add_argument("-c", "--compiler", type=str, default='gcc', help="Compiler (gcc|msvc)")
-    parser.add_argument("-l", "--nsis-log", type=bool, default=True, help='Enable NSIS logging. See LogSet and LogText')
+    parser.add_argument("-c", "--compiler", type=str, default='gcc', choices=['gcc', 'msvc'], help="Compiler (gcc|msvc)")
+    parser.add_argument("-l", "--nsis-log", type=to_bool, default=True, help='Enable NSIS logging. See LogSet and LogText')
     parser.add_argument("-s", "--nsis-max-strlen", type=int, default=4096, help='Sets NSIS maximum string length. See NSIS_MAX_STRLEN')
-    parser.add_argument("-t", "--tests", type=bool, default=True, help='Build and run NSIS unit tests')
+    parser.add_argument("-t", "--tests", type=to_bool, default=True, help='Build and run NSIS unit tests')
     args = parser.parse_args()
 
     separator = ''
@@ -239,6 +249,7 @@ if __name__ == '__main__':
     print(separator)
     build_zlib(args.compiler, args.arch, zlibdir)
 
+    cppunitdir = None
     if args.tests:
         cppunitdir = path.join(workdir, '.depend', 'cppunit')
         print(separator)
