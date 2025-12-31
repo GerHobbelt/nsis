@@ -91,8 +91,8 @@ elif compression == 'zstd':
 	# Performance / Size tradeoff: those seems to have no impact, 
 	# but if general exehead performance is improved this should be re-evaluated
 	env.Append(CPPDEFINES = ['DYNAMIC_BMI2=0']) # x64 only, saves probably 3kiB
-	env.Append(CPPDEFINES = ['HUF_FORCE_DECOMPRESS_X1=1']) # saves 5.5kiB
-	env.Append(CPPDEFINES = ['ZSTD_FORCE_DECOMPRESS_SEQUENCES_SHORT=1']) # saves 3.5kiB
+#	env.Append(CPPDEFINES = ['HUF_FORCE_DECOMPRESS_X1=1']) # saves 5.5kiB
+#	env.Append(CPPDEFINES = ['ZSTD_FORCE_DECOMPRESS_SEQUENCES_SHORT=1']) # saves 3.5kiB
 	files += zstd_files
 
 if solid_compression:

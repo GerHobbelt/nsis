@@ -96,7 +96,7 @@ int zstdDecompressor::getAvailOut() { return output.size - output.pos; }
 
 void zstdDecompressor::init()
 { 
-  ZSTD_resetDStream(ctx);
+  ZSTD_DCtx_reset(ctx, ZSTD_reset_session_only);
   ZSTD_DCtx_setParameter(ctx, ZSTD_d_format, ZSTD_f_zstd1_magicless);
 }
 

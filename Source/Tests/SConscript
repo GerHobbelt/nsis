@@ -141,6 +141,9 @@ env.Append(CCFLAGS = ['$EXCEPTION_FLAG'])
 # for lzma
 env.Append(CPPDEFINES = ['COMPRESS_MF_BT'])
 
+# for zstd
+env.Append(CPPDEFINES = ['DYNAMIC_BMI2=0'])
+
 # test for CppUnit
 conf = env.Configure()
 cppunit = conf.CheckLibWithHeader(cppunitlibs, 'cppunit/extensions/HelperMacros.h', 'C++')

@@ -23,8 +23,7 @@ extern "C" {
 #if defined(ZSTD_MULTITHREAD) && defined(_WIN32)
 
 /**
- * Windows minimalist Pthread Wrapper, based on :
- * http://www.cse.wustl.edu/~schmidt/win32-cv-1.html
+ * Windows minimalist Pthread Wrapper
  */
 #ifdef WINVER
 #  undef WINVER
@@ -54,24 +53,22 @@ extern "C" {
 #define ZSTD_pthread_mutex_unlock(a)   LeaveCriticalSection((a))
 
 /* condition variable */
-#define ZSTD_pthread_cond_t             CONDITION_VARIABLE
-#define ZSTD_pthread_cond_init(a, b)    ((void)(b), InitializeConditionVariable((a)), 0)
+#define ZSTD_pthread_cond_t             void*
+#define ZSTD_pthread_cond_init(a, b)    ((void)(b), NSIS_InitializeConditionVariable((a)), 0)
 #define ZSTD_pthread_cond_destroy(a)    ((void)(a))
-#define ZSTD_pthread_cond_wait(a, b)    SleepConditionVariableCS((a), (b), INFINITE)
-#define ZSTD_pthread_cond_signal(a)     WakeConditionVariable((a))
-#define ZSTD_pthread_cond_broadcast(a)  WakeAllConditionVariable((a))
+#define ZSTD_pthread_cond_wait(a, b)    NSIS_SleepConditionVariableCS((a), (b), INFINITE)
+#define ZSTD_pthread_cond_signal(a)     NSIS_WakeConditionVariable((a))
+#define ZSTD_pthread_cond_broadcast(a)  NSIS_WakeAllConditionVariable((a))
+
+
 
 /* ZSTD_pthread_create() and ZSTD_pthread_join() */
-typedef struct {
-    HANDLE handle;
-    void* (*start_routine)(void*);
-    void* arg;
-} ZSTD_pthread_t;
+typedef HANDLE ZSTD_pthread_t;
 
 int ZSTD_pthread_create(ZSTD_pthread_t* thread, const void* unused,
                    void* (*start_routine) (void*), void* arg);
 
-int ZSTD_pthread_join(ZSTD_pthread_t thread, void** value_ptr);
+int ZSTD_pthread_join(ZSTD_pthread_t thread);
 
 /**
  * add here more wrappers as required
@@ -99,7 +96,7 @@ int ZSTD_pthread_join(ZSTD_pthread_t thread, void** value_ptr);
 
 #define ZSTD_pthread_t                  pthread_t
 #define ZSTD_pthread_create(a, b, c, d) pthread_create((a), (b), (c), (d))
-#define ZSTD_pthread_join(a, b)         pthread_join((a),(b))
+#define ZSTD_pthread_join(a)         pthread_join((a),NULL)
 
 #else /* DEBUGLEVEL >= 1 */
 
@@ -124,7 +121,7 @@ int ZSTD_pthread_cond_destroy(ZSTD_pthread_cond_t* cond);
 
 #define ZSTD_pthread_t                  pthread_t
 #define ZSTD_pthread_create(a, b, c, d) pthread_create((a), (b), (c), (d))
-#define ZSTD_pthread_join(a, b)         pthread_join((a),(b))
+#define ZSTD_pthread_join(a)         pthread_join((a),NULL)
 
 #endif
 

@@ -223,12 +223,20 @@ class MSPE:
 		return ReadU16LE(self._f, self.NTHOffset+4+20+70)
 	def WriteDllCharacteristics(self, value):
 		return WriteU16LE(self._f, value, self.NTHOffset+4+20+70)
+	def ReadOsMajor(self):
+		return ReadU16LE(self._f, self.NTHOffset+4+20+40)
 	def WriteOsMajor(self, value):
 		return WriteU16LE(self._f, value, self.NTHOffset+4+20+40)
+	def ReadOsMinor(self):
+		return ReadU16LE(self._f, self.NTHOffset+4+20+42)
 	def WriteOsMinor(self, value):
 		return WriteU16LE(self._f, value, self.NTHOffset+4+20+42)
+	def ReadSubsystemMajor(self):
+		return ReadU16LE(self._f, self.NTHOffset+4+20+48)
 	def WriteSubsystemMajor(self, value):
 		return WriteU16LE(self._f, value, self.NTHOffset+4+20+48)
+	def ReadSubsystemMinor(self):
+		return ReadU16LE(self._f, self.NTHOffset+4+20+50)
 	def WriteSubsystemMinor(self, value):
 		return WriteU16LE(self._f, value, self.NTHOffset+4+20+50)
 	def WriteChecksum(self, value):
@@ -290,6 +298,9 @@ def SetPEMinOS(filepath, osMajor, osMinor, ssMajor, ssMinor):
 	finally:
 		return
 
+def SetPEWin95Supported(target, source, env):
+	SetPESupportedOS(target[0].path, 4, 0, 4, 0)
+
 def MakeReproducibleAction(target, source, env):
 	if env.get('SOURCE_DATE_EPOCH','') != '':
 		SetPETimestamp(target[0].path, env['SOURCE_DATE_EPOCH'])
@@ -336,5 +347,5 @@ def WriteResourceVersion(rcfile, v1, v2, v3=0, v4=0, file_version=True, product_
         if verbose: print("file already up-to-date")
     return False
 
-Export('GetStdSysEnvVarList AddAvailableLibs AddZLib GenerateTryLinkCode FlagsConfigure GetAvailableLibs GetOptionOrEnv SilentActionEcho IsPEExecutable SetPESecurityFlagsWorker SetPEMinOS MakeReproducibleAction')
+Export('GetStdSysEnvVarList AddAvailableLibs AddZLib GenerateTryLinkCode FlagsConfigure GetAvailableLibs GetOptionOrEnv SilentActionEcho IsPEExecutable SetPESecurityFlagsWorker SetPEMinOS MakeReproducibleAction SetPEWin95Supported')
 Export('WriteResourceVersion')

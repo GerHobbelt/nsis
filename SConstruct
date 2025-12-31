@@ -487,7 +487,7 @@ def Sign(targets):
 			a = defenv.Action('$CODESIGNER "%s"' % t.path)
 			defenv.AddPostAction(t, a)
 
-Import('SilentActionEcho IsPEExecutable SetPESecurityFlagsWorker SetPEMinOS MakeReproducibleAction')
+Import('SilentActionEcho IsPEExecutable SetPESecurityFlagsWorker SetPEMinOS MakeReproducibleAction SetPEWin95Supported')
 def SetPESecurityFlagsAction(target, source, env):
 	for t in target:
 		SetPESecurityFlagsWorker(t.path)
@@ -513,6 +513,9 @@ def SetTargetPEMinOS(target, source=None, env=None):
 def MakeReproducible(targets):
 	for t in targets:
 		defenv.AddPostAction(t, defenv.Action(MakeReproducibleAction, strfunction=SilentActionEcho))
+def MakeWin95Compatible(targets):
+	for t in targets:
+		defenv.AddPostAction(t, defenv.Action(SetPEWin95Supported, strfunction=SilentActionEcho))
 
 def TestScript(scripts):
 	defenv.Install('$TESTDISTDIR/Tests', scripts)
@@ -533,6 +536,7 @@ defenv.Sign = Sign
 defenv.SetPESecurityFlags = SetPESecurityFlags
 defenv.SetTargetPEMinOS = SetTargetPEMinOS
 defenv.MakeReproducible = MakeReproducible
+defenv.MakeWin95Compatible = MakeWin95Compatible
 defenv.TestScript = TestScript
 
 def DistributeExtras(env, target, examples, docs):
@@ -732,6 +736,7 @@ def BuildStub(compression, solid, unicode):
 
 	env.SetTargetPEMinOS(target)
 	env.MakeReproducible(target)
+	env.MakeWin95Compatible(target)
 	env.DistributeStubs(target, names=compression+suffix)
 
 	defenv.Alias(compression, target)
@@ -803,6 +808,7 @@ def BuildPluginWorker(target, source, libs, examples = None, docs = None,
 	defenv.SetTargetPEMinOS(plugin)
 	defenv.SetPESecurityFlags(plugin)
 	defenv.MakeReproducible(plugin)
+	defenv.MakeWin95Compatible(plugin)
 	defenv.Sign(plugin)
 
 	CleanMap(env, plugin, target)
